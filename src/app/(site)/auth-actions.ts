@@ -1,0 +1,96 @@
+"use server";
+
+import { eq } from "drizzle-orm";
+import { cookies, headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { getAuth } from "@/lib/auth";
+import { getDb } from "@/lib/db/client";
+import { leads, workspaceMembers, workspaces } from "@/lib/db/schema";
+import { DEMO_COOKIE } from "@/lib/tenant";
+import { newId } from "@/lib/util";
+
+export interface FormState {
+  error?: string;
+  ok?: string;
+}
+
+const str = (fd: FormData, k: string) => (typeof fd.get(k) === "string" ? (fd.get(k) as string).trim() : "");
+const safeNext = (n: string) => (n.startsWith("/") && !n.startsWith("//") ? n : "/app");
+
+function message(err: unknown): string {
+  const m = err instanceof Error ? err.message : "";
+  if (/already exists|already registered/i.test(m)) return "An account with that email already exists. Sign in instead.";
+  if (/invalid (email or )?password|invalid credentials/i.test(m)) return "Email or password is incorrect.";
+  if (/password.*(short|least)/i.test(m)) return "Use a password of at least 10 characters.";
+  return m || "Something went wrong. Try again.";
+}
+
+export async function signUpAction(_: FormState, fd: FormData): Promise<FormState> {
+  const name = str(fd, "name");
+  const email = str(fd, "email").toLowerCase();
+  const password = str(fd, "password");
+  const company = str(fd, "company");
+  if (!name || !email || !password) return { error: "Name, email and password are required." };
+  if (password.length < 10) return { error: "Use a password of at least 10 characters." };
+  try {
+    const auth = await getAuth();
+    const res = await auth.api.signUpEmail({ body: { name, email, password }, headers: await headers() });
+    if (company) {
+      const db = await getDb();
+      const [m] = await db.select().from(workspaceMembers).where(eq(workspaceMembers.userId, res.user.id)).limit(1);
+      if (m) await db.update(workspaces).set({ name: company.slice(0, 80) }).where(eq(workspaces.id, m.workspaceId));
+    }
+  } catch (err) {
+    return { error: message(err) };
+  }
+  (await cookies()).delete(DEMO_COOKIE);
+  redirect("/app/import");
+}
+
+export async function signInAction(_: FormState, fd: FormData): Promise<FormState> {
+  const email = str(fd, "email").toLowerCase();
+  const password = str(fd, "password");
+  try {
+    const auth = await getAuth();
+    await auth.api.signInEmail({ body: { email, password }, headers: await headers() });
+  } catch (err) {
+    return { error: message(err) };
+  }
+  (await cookies()).delete(DEMO_COOKIE);
+  redirect(safeNext(str(fd, "next")));
+}
+
+export async function socialSignInAction(fd: FormData) {
+  const provider = str(fd, "provider") as "microsoft" | "github";
+  const auth = await getAuth();
+  const res = await auth.api.signInSocial({ body: { provider, callbackURL: "/app" }, headers: await headers() });
+  (await cookies()).delete(DEMO_COOKIE);
+  if (res && "url" in res && res.url) redirect(res.url);
+  redirect("/sign-in");
+}
+
+export async function pilotAction(_: FormState, fd: FormData): Promise<FormState> {
+  const name = str(fd, "name");
+  const email = str(fd, "email");
+  const company = str(fd, "company");
+  if (!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !company) return { error: "Name, a work email and company are required." };
+  if (str(fd, "website")) return { ok: "Thanks. We will be in touch within two business days." }; // honeypot
+  const row = {
+    id: newId("LEAD"),
+    name: name.slice(0, 120),
+    email: email.slice(0, 200),
+    company: company.slice(0, 200),
+    role: str(fd, "role").slice(0, 120) || null,
+    segment: str(fd, "segment").slice(0, 60) || null,
+    monthlyAlerts: Number(str(fd, "monthlyAlerts")) || null,
+    monitoringSystem: str(fd, "monitoringSystem").slice(0, 120) || null,
+    message: str(fd, "message").slice(0, 2000) || null,
+  };
+  const db = await getDb();
+  await db.insert(leads).values(row);
+  const hook = process.env.LEAD_WEBHOOK_URL;
+  if (hook) {
+    fetch(hook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: `New pilot request: ${row.name}, ${row.company} (${row.email})`, ...row }) }).catch(() => {});
+  }
+  return { ok: "Thanks. We will reply within two business days with a short scoping call." };
+}
