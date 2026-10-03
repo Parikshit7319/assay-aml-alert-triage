@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
-import { batchCloseAction, type ActionState } from "@/app/app/actions";
+import type { ActionState } from "@/lib/action-types";
 import type { Typology } from "@/lib/db/schema";
 import { ago, daysLeft, REC_LABEL, STATUS_LABEL, TYPOLOGY_LABEL } from "@/lib/labels";
 import type { QueueRow } from "@/lib/queries";
@@ -15,7 +15,13 @@ export function QueueTable({
   batchableCount,
   qaRate,
   selectable,
+  batchAction,
+  alertHref = (id: string) => `/app/alerts/${id}`,
+  onOpen,
 }: {
+  batchAction: (prev: ActionState, fd: FormData) => Promise<ActionState>;
+  alertHref?: (id: string) => string;
+  onOpen?: (id: string) => void;
   rows: Row[];
   shadow: Record<Typology, boolean>;
   batchableCount: number;
@@ -24,7 +30,7 @@ export function QueueTable({
 }) {
   const eligible = useMemo(() => rows.filter((r) => r.batchEligible && r.status === "triaged" && !shadow[r.typology]).map((r) => r.id), [rows, shadow]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [state, action, pending] = useActionState<ActionState, FormData>(batchCloseAction, {});
+  const [state, action, pending] = useActionState<ActionState, FormData>(batchAction, {});
   const toggle = (id: string) =>
     setSelected((s) => {
       const n = new Set(s);
@@ -40,7 +46,7 @@ export function QueueTable({
       <div className="panel empty">
         <h2>Nothing here</h2>
         <p>
-          No alerts match this view. Import alerts from your monitoring system on the <Link href="/app/import">Import</Link> page, or send them through the API.
+          No alerts match this view.
         </p>
       </div>
     );
@@ -108,7 +114,11 @@ export function QueueTable({
                     </td>
                   )}
                   <td>
-                    <Link className="row-link num" href={`/app/alerts/${r.id}`}>
+                    <Link
+                      className="row-link num"
+                      href={alertHref(r.id)}
+                      onClick={onOpen ? (e) => (e.preventDefault(), onOpen(r.id)) : undefined}
+                    >
                       {r.id}
                     </Link>
                     <span className="cell-sub">

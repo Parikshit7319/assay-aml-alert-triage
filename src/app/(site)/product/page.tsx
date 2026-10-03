@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { startDemo } from "../../demo-action";
+import { DemoButton } from "@/components/DemoButton";
 
 export const metadata: Metadata = { title: "How it works", description: "What Assay reads, checks and recommends for each AML alert, and what the analyst sees." };
 
@@ -100,11 +100,7 @@ export default function ProductPage() {
         <aside className="aside-box">
           <h2>See it on 44 synthetic alerts</h2>
           <p>The demo opens a private workspace with structuring, funnel, wire, watchlist, payroll and seasonal cases, plus two prompt-injection attempts.</p>
-          <form action={startDemo}>
-            <button className="btn" type="submit" style={{ width: "100%" }}>
-              Open the demo
-            </button>
-          </form>
+          <DemoButton full />
         </aside>
       </div>
     </>

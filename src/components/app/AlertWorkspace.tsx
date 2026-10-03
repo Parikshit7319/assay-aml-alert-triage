@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
-import { decideAction, markSuspiciousAction, rerunAction, sarDecisionAction, type ActionState } from "@/app/app/actions";
+import type { ActionState } from "@/lib/action-types";
 import type { PolicyHit, RationaleItem, TraceStep, Typology, ValidationResult } from "@/lib/db/schema";
 import type { WatchlistHit } from "@/lib/engine/types";
 import { ACTION_LABEL, daysLeft, fmtDate, fmtDateTime, REC_LABEL, STATUS_LABEL, TYPOLOGY_LABEL } from "@/lib/labels";
@@ -18,7 +18,10 @@ interface Txn {
   memo: string | null;
 }
 
+type Act = (prev: ActionState, fd: FormData) => Promise<ActionState>;
+
 interface Props {
+  actions: { decide: Act; markSuspicious: Act; sarDecision: Act; rerun: Act };
   alert: {
     id: string;
     externalId: string | null;
@@ -108,10 +111,10 @@ export function AlertWorkspace(p: Props) {
   const [replay, setReplay] = useState(0);
   const [showAll, setShowAll] = useState(true);
   const seconds = useSeconds();
-  const [decState, decide, deciding] = useActionState<ActionState, FormData>(decideAction, {});
-  const [susState, suspicious, marking] = useActionState<ActionState, FormData>(markSuspiciousAction, {});
-  const [sarState, sar, recording] = useActionState<ActionState, FormData>(sarDecisionAction, {});
-  const [rerunState, rerun, rerunning] = useActionState<ActionState, FormData>(rerunAction, {});
+  const [decState, decide, deciding] = useActionState<ActionState, FormData>(p.actions.decide, {});
+  const [susState, suspicious, marking] = useActionState<ActionState, FormData>(p.actions.markSuspicious, {});
+  const [sarState, sar, recording] = useActionState<ActionState, FormData>(p.actions.sarDecision, {});
+  const [rerunState, rerun, rerunning] = useActionState<ActionState, FormData>(p.actions.rerun, {});
   const secRef = useRef<HTMLInputElement>(null);
 
   const activeSet = useMemo(() => new Set(active), [active]);

@@ -60,3 +60,12 @@ export function fmtDate(d: Date | string): string {
   const x = typeof d === "string" ? new Date(d) : d;
   return x.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
+
+export const OVERRIDE_REASONS = [
+  { code: "documented_purpose", label: "Documented business purpose the agent did not weigh" },
+  { code: "customer_history", label: "Customer history explains the activity" },
+  { code: "missing_evidence", label: "Agent missed or misread evidence" },
+  { code: "new_information", label: "New information outside the system" },
+  { code: "policy_requirement", label: "Internal policy requires a different outcome" },
+  { code: "risk_judgment", label: "Analyst risk judgment" },
+] as const;

@@ -3,90 +3,21 @@ import { and, asc, eq, gte, isNotNull, lt, sql } from "drizzle-orm";
 import type { DB } from "./db/client";
 import { alerts, decisions, metricRollups, qaReviews, triageRuns, workspaces, type Typology } from "./db/schema";
 import { DAY } from "./util";
+import { aggregateTypologies, aggregateWeeks, type TypologyStat, type WeekRow } from "./metrics-pure";
+export type { TypologyStat, WeekRow };
+export { HUMAN_DISAGREEMENT_BASELINE, L3_MIN_AGREEMENT, L3_MIN_QA } from "./metrics-pure";
 
 type Workspace = typeof workspaces.$inferSelect;
 
-/** Modeled guardrail: how often two human reviewers disagree on a close. Replace with your own QA baseline. */
-export const HUMAN_DISAGREEMENT_BASELINE = 0.03;
-export const L3_MIN_QA = 2000;
-export const L3_MIN_AGREEMENT = 0.98;
 
-export interface WeekRow {
-  weekStart: string;
-  mode: "manual" | "shadow" | "assisted";
-  alerts: number;
-  closes: number;
-  escalations: number;
-  sars: number;
-  l1Hours: number;
-  l2Hours: number;
-  hoursPerSar: number | null;
-  qaSampled: number;
-  qaAgreed: number;
-  missed: number;
-  accepted: number;
-  overridden: number;
-  synthetic: boolean;
-}
 
 export async function weeklySeries(db: DB, wsId: string): Promise<WeekRow[]> {
-  const rows = await db.select().from(metricRollups).where(eq(metricRollups.workspaceId, wsId)).orderBy(asc(metricRollups.weekStart));
-  const byWeek = new Map<string, WeekRow>();
-  for (const r of rows) {
-    const w =
-      byWeek.get(r.weekStart) ??
-      ({ weekStart: r.weekStart, mode: r.mode, alerts: 0, closes: 0, escalations: 0, sars: 0, l1Hours: 0, l2Hours: 0, hoursPerSar: null, qaSampled: 0, qaAgreed: 0, missed: 0, accepted: 0, overridden: 0, synthetic: r.synthetic } as WeekRow);
-    w.alerts += r.alerts;
-    w.closes += r.closes;
-    w.escalations += r.escalations;
-    w.sars += r.sarsFiled;
-    w.l1Hours += r.l1Seconds / 3600;
-    w.l2Hours += r.l2Seconds / 3600;
-    w.qaSampled += r.qaSampled;
-    w.qaAgreed += r.qaAgreed;
-    w.missed += r.missedEscalations;
-    w.accepted += r.recsAccepted;
-    w.overridden += r.recsOverridden;
-    byWeek.set(r.weekStart, w);
-  }
-  return [...byWeek.values()].map((w) => ({ ...w, hoursPerSar: w.sars ? (w.l1Hours + w.l2Hours) / w.sars : null }));
+  return aggregateWeeks(await db.select().from(metricRollups).where(eq(metricRollups.workspaceId, wsId)).orderBy(asc(metricRollups.weekStart)));
 }
 
-export interface TypologyStat {
-  typology: Typology;
-  alerts: number;
-  escalationRate: number;
-  shadowAgreement: number | null;
-  qaSampled: number;
-  qaAgreement: number | null;
-  missedRate: number | null;
-}
 
 export async function typologyStats(db: DB, wsId: string): Promise<TypologyStat[]> {
-  const rows = await db.select().from(metricRollups).where(eq(metricRollups.workspaceId, wsId));
-  const acc = new Map<Typology, { alerts: number; esc: number; sa: number; so: number; qs: number; qa: number; missed: number }>();
-  for (const r of rows) {
-    const a = acc.get(r.typology) ?? { alerts: 0, esc: 0, sa: 0, so: 0, qs: 0, qa: 0, missed: 0 };
-    a.alerts += r.alerts;
-    a.esc += r.escalations;
-    if (r.mode === "shadow") {
-      a.sa += r.recsAccepted;
-      a.so += r.recsOverridden;
-    }
-    a.qs += r.qaSampled;
-    a.qa += r.qaAgreed;
-    a.missed += r.missedEscalations;
-    acc.set(r.typology, a);
-  }
-  return [...acc.entries()].map(([typology, a]) => ({
-    typology,
-    alerts: a.alerts,
-    escalationRate: a.alerts ? a.esc / a.alerts : 0,
-    shadowAgreement: a.sa + a.so ? a.sa / (a.sa + a.so) : null,
-    qaSampled: a.qs,
-    qaAgreement: a.qs ? a.qa / a.qs : null,
-    missedRate: a.qs ? a.missed / a.qs : null,
-  }));
+  return aggregateTypologies(await db.select().from(metricRollups).where(eq(metricRollups.workspaceId, wsId)));
 }
 
 export interface LiveStats {

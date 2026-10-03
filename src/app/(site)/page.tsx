@@ -3,9 +3,7 @@ import { HeroLedger } from "@/components/HeroLedger";
 import { RoiCalculator } from "@/components/RoiCalculator";
 import { AUTONOMY_LEVELS, NEVER_AUTOMATED } from "@/lib/engine/policy";
 import { PLANS } from "@/lib/plans";
-import { startDemo } from "../demo-action";
-
-export const revalidate = 86400;
+import { DemoButton } from "@/components/DemoButton";
 
 const STEPS = [
   {
@@ -41,11 +39,7 @@ export default function Home() {
               Assay reads the alert, gathers the evidence, and recommends close or escalate. Your analysts make the call. Deterministic rules decide what the model is not allowed to.
             </p>
             <div className="hero__actions">
-              <form action={startDemo}>
-                <button className="btn" type="submit">
-                  Open the demo
-                </button>
-              </form>
+              <DemoButton />
               <Link className="btn btn-outline" href="/pilot">
                 Request a pilot
               </Link>

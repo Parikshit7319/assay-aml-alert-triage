@@ -5,6 +5,7 @@ import type { AlertStatus, Typology } from "@/lib/db/schema";
 import { TYPOLOGIES, TYPOLOGY_LABEL } from "@/lib/labels";
 import { OPEN, queueRows } from "@/lib/queries";
 import { requireTenant } from "@/lib/tenant";
+import { batchCloseAction } from "./actions";
 
 const VIEWS: Record<string, { label: string; statuses: AlertStatus[] }> = {
   open: { label: "Open", statuses: OPEN },
@@ -86,6 +87,7 @@ export default async function QueuePage(props: PageProps<"/app">) {
         batchableCount={view === "open" ? batchable.length : 0}
         qaRate={t.ws.settings.qaSampleRate}
         selectable={view === "open"}
+        batchAction={batchCloseAction}
       />
     </>
   );

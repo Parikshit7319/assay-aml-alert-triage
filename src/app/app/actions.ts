@@ -16,11 +16,8 @@ import { canAdminister, requireTenant } from "@/lib/tenant";
 import { newId } from "@/lib/util";
 import { batchClose, decideL1, markSuspicious, recordSarDecision, reviewQa, updatePolicy, WorkflowError } from "@/lib/workflow";
 
-export interface ActionState {
-  error?: string;
-  ok?: string;
-  secret?: string;
-}
+import type { ActionState } from "@/lib/action-types";
+export type { ActionState };
 
 function fail(err: unknown): ActionState {
   if (err instanceof WorkflowError) return { error: err.message };

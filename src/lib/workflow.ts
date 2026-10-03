@@ -7,14 +7,7 @@ import { DAY, newId } from "./util";
 
 type Workspace = typeof workspaces.$inferSelect;
 
-export const OVERRIDE_REASONS = [
-  { code: "documented_purpose", label: "Documented business purpose the agent did not weigh" },
-  { code: "customer_history", label: "Customer history explains the activity" },
-  { code: "missing_evidence", label: "Agent missed or misread evidence" },
-  { code: "new_information", label: "New information outside the system" },
-  { code: "policy_requirement", label: "Internal policy requires a different outcome" },
-  { code: "risk_judgment", label: "Analyst risk judgment" },
-] as const;
+export { OVERRIDE_REASONS } from "./labels";
 
 export class WorkflowError extends Error {}
 

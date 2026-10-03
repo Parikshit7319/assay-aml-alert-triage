@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/Wordmark";
 import { brand } from "@/lib/brand";
-import { startDemo } from "../demo-action";
+import { DemoButton } from "@/components/DemoButton";
+import { REPO_URL, STATIC_SITE } from "@/lib/site-mode";
 import "./site.css";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -22,14 +23,16 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <Link href="/about">About</Link>
           </nav>
           <div className="site-header__actions">
-            <Link href="/sign-in" className="btn btn-quiet">
-              Sign in
-            </Link>
-            <form action={startDemo}>
-              <button className="btn btn-small" type="submit">
-                Open the demo
-              </button>
-            </form>
+            {STATIC_SITE ? (
+              <a href={REPO_URL} className="btn btn-quiet">
+                Code on GitHub
+              </a>
+            ) : (
+              <Link href="/sign-in" className="btn btn-quiet">
+                Sign in
+              </Link>
+            )}
+            <DemoButton className="btn btn-small" />
           </div>
         </div>
       </header>

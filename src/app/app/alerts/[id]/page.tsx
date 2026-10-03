@@ -7,6 +7,7 @@ import { computeFindings } from "@/lib/engine/detectors";
 import { loadBundle } from "@/lib/engine/run";
 import { requireTenant } from "@/lib/tenant";
 import { OVERRIDE_REASONS } from "@/lib/workflow";
+import { decideAction, markSuspiciousAction, rerunAction, sarDecisionAction } from "../../actions";
 
 export default async function AlertPage(props: PageProps<"/app/alerts/[id]">) {
   const { id } = await props.params;
@@ -36,6 +37,7 @@ export default async function AlertPage(props: PageProps<"/app/alerts/[id]">) {
         <Link href="/app">Alert queue</Link>
       </p>
       <AlertWorkspace
+        actions={{ decide: decideAction, markSuspicious: markSuspiciousAction, sarDecision: sarDecisionAction, rerun: rerunAction }}
         alert={{
           id: alert.id,
           externalId: alert.externalId,

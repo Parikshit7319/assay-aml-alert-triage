@@ -1,9 +1,8 @@
-import { randomBytes } from "node:crypto";
-
 const ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // no 0/1/I/O for readability
 
 export function newId(prefix: string, length = 6): string {
-  const bytes = randomBytes(length);
+  const bytes = new Uint8Array(length);
+  globalThis.crypto.getRandomValues(bytes);
   let out = "";
   for (let i = 0; i < length; i++) out += ALPHABET[bytes[i] % ALPHABET.length];
   return `${prefix}-${out}`;

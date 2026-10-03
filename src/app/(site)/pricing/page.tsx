@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SIGN_UP_HREF } from "@/lib/site-mode";
 import { LOOKBACK_OFFER, PLANS } from "@/lib/plans";
 
 export const metadata: Metadata = { title: "Pricing", description: "Sandbox free, Team $1,500 a month with 2,000 alerts included, Enterprise in your own Azure subscription." };
@@ -39,12 +40,12 @@ export default function PricingPage() {
                   ))}
                 </ul>
                 {id === "sandbox" && (
-                  <Link className="btn btn-outline" href="/sign-up">
+                  <Link className="btn btn-outline" href={SIGN_UP_HREF}>
                     Create a free workspace
                   </Link>
                 )}
                 {id === "team" && (
-                  <Link className="btn" href="/sign-up">
+                  <Link className="btn" href={SIGN_UP_HREF}>
                     Start on Sandbox, upgrade in the app
                   </Link>
                 )}
