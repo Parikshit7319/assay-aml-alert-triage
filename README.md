@@ -1,5 +1,8 @@
 # Assay
 
+**Live site:** https://parikshit7319.github.io/assay-aml-alert-triage/
+**Live demo:** https://parikshit7319.github.io/assay-aml-alert-triage/demo/ (44 synthetic alerts, runs in your browser)
+
 An AI first-pass analyst for AML transaction-monitoring alerts. It gathers the evidence, recommends close or escalate with a citation behind every claim, and leaves the decision to a human. Deterministic policy decides what the model is not allowed to do.
 
 "Assay" is a working name. Trademark and domain are not cleared; the name lives in `src/lib/brand.ts`.
@@ -47,7 +50,7 @@ npm run build    # production build
 
 **Azure instead:** `docker build -t assay .` and run the image on Azure Container Apps with Azure Database for PostgreSQL. Point `AZURE_OPENAI_*` at a deployment in the same subscription.
 
-GitHub Pages cannot host this: it serves static files only, and the product needs a server and a database.
+GitHub Pages hosts the **static edition** (`node scripts/build-pages.mjs`, deployed by `.github/workflows/pages.yml`): the full marketing site plus the demo running entirely in the browser with the same engine, policy rules and audit chain. Accounts, billing, CSV import and the REST API need the server edition above.
 
 ## Turn on billing
 
