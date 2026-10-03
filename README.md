@@ -4,6 +4,14 @@ An AI first-pass analyst for AML transaction-monitoring alerts. It gathers the e
 
 "Assay" is a working name. Trademark and domain are not cleared; the name lives in `src/lib/brand.ts`.
 
+## Screenshots
+
+| Alert workspace | Metrics |
+|---|---|
+| ![Alert workspace with cited rationale](docs/screenshots/alert-workspace.png) | ![North star and guardrails](docs/screenshots/metrics.png) |
+
+![Risk-sorted alert queue with batch approval](docs/screenshots/alert-queue.png)
+
 ## What is in the box
 
 - **Marketing site:** home with a live engine run in the hero, product, governance, pricing, pilot request, API docs, sources.
