@@ -56,7 +56,7 @@ export default function PrivacyPage() {
             Clicks on a few labeled buttons, such as the demo button, are counted the same way. No IP address is stored. If your browser sends Do Not Track or Global Privacy Control, the page sends nothing at all.
           </p>
           <p>
-            The static edition of this site on GitHub Pages sends these events only when a server edition is configured to receive them. When none is configured, nothing leaves your browser.
+            The GitHub Pages edition of this site sends these events, and pilot requests, to a small Assay API running as a Neon Function in AWS US East (Ohio), with the data stored in Neon Postgres in the same region. The demo itself sends nothing: alerts, decisions and any model key you add stay in your browser.
           </p>
           <h2>Who processes data</h2>
           <p>

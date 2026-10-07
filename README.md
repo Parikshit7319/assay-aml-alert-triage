@@ -57,6 +57,8 @@ The button clones this repository into your GitHub account, creates a Vercel pro
 - **Nightly job.** `vercel.json` schedules `/api/cron/rollup` (expired demo cleanup and weekly metric rollups). Set `CRON_SECRET` and Vercel sends it as the bearer token; without it the job refuses to run.
 - **No database at all** still boots on Vercel, on a throwaway embedded database in `/tmp` that disappears with the instance. Fine for a look, not for data.
 
+**Public API for the static site.** `edge/neon-api/index.mjs` is a dependency-free Neon Function that serves `POST /api/leads`, `POST /api/track` and `GET /api/public/stats` with the same contracts as the server edition, writing to Neon Postgres over SQL-over-HTTP. The live GitHub Pages site uses it by default (see `NEXT_PUBLIC_API_BASE` in `.github/workflows/pages.yml`), so pilot requests and page views work without the full server. Its database already carries the server edition's migrations, so a Vercel deployment can point `DATABASE_URL` at the same Neon project.
+
 To point the static GitHub Pages edition at your deployment, build it with `NEXT_PUBLIC_APP_ORIGIN=https://your-app.vercel.app` (and optionally `NEXT_PUBLIC_API_BASE` if the API lives elsewhere). Its pilot form then posts to `/api/leads`, its analytics beacon to `/api/track`, and sign-up links go to your server.
 
 **Azure instead:** `docker build -t assay .` and run the image on Azure Container Apps with Azure Database for PostgreSQL. Point `AZURE_OPENAI_*` at a deployment in the same subscription.

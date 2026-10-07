@@ -38,7 +38,7 @@ Each item from the October 2026 review, and where it lives in the code.
 
 | # | Change | Where |
 |---|---|---|
-| 23 | Server edition deployable (Vercel plus Neon) | Deploy button and env table in `README.md`; derived auth secret, Vercel URL fallbacks, advisory-locked migrations in `src/lib/auth.ts`, `src/lib/db/client.ts`, `src/lib/db/migrate.ts`; `vercel.json` |
+| 23 | Server edition deployable (Vercel plus Neon) | Neon project `assay` created and migrated (all three migrations, journal included); public API live on Neon Functions (`edge/neon-api`); one-click Vercel deploy in `README.md` with derived auth secret, Vercel URL fallbacks and advisory-locked migrations (`src/lib/auth.ts`, `src/lib/db/client.ts`, `src/lib/db/migrate.ts`, `vercel.json`). The Vercel project itself needs the owner's Vercel sign-in. |
 | 24 | Bring-your-own-key live model in the demo | `ModelKeyDialog.tsx`, `src/lib/engine/providers/browser.ts`, `use-model-config.ts`; "Use my own key" on every alert |
 | 25 | CSV upload in the demo | `src/components/workbench/ImportPanel.tsx`, `src/lib/demo/csv-browser.ts` |
 | 26 | Ask the agent, with citations | `src/components/demo/AskAgent.tsx`, `src/lib/ask/*` (demo and server alert pages) |
@@ -65,7 +65,7 @@ Each item from the October 2026 review, and where it lives in the code.
 | 42 | Real step timings instead of "1 ms" | measured load timings in `run.ts` and `demo/bundle.ts`, `fmtMs` in `util.ts` |
 | 43 | Viewer's local time instead of UTC | `src/components/workbench/Time.tsx` across the workbench |
 | 44 | Wrapping fixes ("$4,500.00 a / month", "Cla ude") | `.nowrap`, `.run-meta dd` and `.kv` fixes in `app.css` |
-| 45 | No dead ends on the static site | pilot form posts to `/api/leads` when a server is configured, else an email fallback with copy; sign-up goes to the server origin |
+| 45 | No dead ends on the static site | the pilot form posts to the live Neon API (`/api/leads`), sign-up links go to the server origin once set, email fallback only if the API is unreachable |
 | 46 | "Code on GitHub" moved to the footer | `SiteFooter.tsx` |
 | 47 | Toasts and auto-advance to the next alert | `Toasts.tsx`, "Open the next alert after I decide" in `AlertWorkspace.tsx` |
 | 48 | Accessibility pass | axe-core scan (WCAG 2.1 AA, serious and critical) clean on every marketing page and the demo; labels, focus traps, live regions, keyboard paths |
@@ -76,5 +76,5 @@ Each item from the October 2026 review, and where it lives in the code.
 |---|---|---|
 | 49 | Security page with a data-flow diagram, encryption, retention, subprocessors, SOC 2 roadmap | `/security`, `diagrams/DataFlow.tsx` |
 | 50 | Honest social proof: real product counts and a design partner program, live pilot count only at 3 or more | `DesignPartner.tsx`, `PilotDemand.tsx`, `/api/public/stats` |
-| 51 | Custom domain support and first-party analytics | `PAGES_CNAME` in `build-pages.mjs` and `pages.yml`; `/api/track`, `/admin/analytics`, `Analytics.tsx` (no cookies, no IP stored, honors DNT and GPC) |
+| 51 | Custom domain support and first-party analytics | `PAGES_CNAME` repository variable (`build-pages.mjs`, `pages.yml`) switches the site to a custom domain; analytics live via the Neon API (`/api/track`) and `/admin/analytics` on the server edition, no cookies, no IP stored, honors DNT and GPC |
 | 52 | 90-second demo video on the home page and a GIF in the README | `public/media/demo.mp4`, `DemoVideo.tsx`, `docs/demo.gif` |

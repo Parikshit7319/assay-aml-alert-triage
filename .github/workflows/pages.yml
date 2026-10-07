@@ -34,7 +34,8 @@ jobs:
           # PAGES_CNAME for a custom domain, APP_ORIGIN / API_BASE once the server edition is deployed.
           PAGES_CNAME: ${{ vars.PAGES_CNAME }}
           NEXT_PUBLIC_APP_ORIGIN: ${{ vars.APP_ORIGIN }}
-          NEXT_PUBLIC_API_BASE: ${{ vars.API_BASE }}
+          # Default: the Assay public API on Neon Functions (edge/neon-api), which takes pilot requests and page views.
+          NEXT_PUBLIC_API_BASE: ${{ vars.API_BASE || 'https://br-sweet-field-b48uhp5p-assayapi.compute.c-6.us-east-2.aws.neon.tech' }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out

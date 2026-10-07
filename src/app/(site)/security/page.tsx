@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 const SUBPROCESSORS: { name: string; purpose: string; data: string; when: string; optional: boolean }[] = [
   { name: "Vercel", purpose: "Hosts the app and API for the hosted edition", data: "Workspace data in transit", when: "Hosted edition (reference deployment)", optional: false },
-  { name: "Neon", purpose: "Managed Postgres for the hosted edition", data: "Workspace data at rest", when: "Hosted edition (reference deployment)", optional: false },
+  { name: "Neon", purpose: "Managed Postgres for the hosted edition, plus the small public API (pilot requests, page views) behind the GitHub Pages site", data: "Workspace data at rest; pilot requests; page-view counts", when: "Hosted edition and this website", optional: false },
   {
     name: "Microsoft Azure",
     purpose: "Container Apps, Azure Database for PostgreSQL and Azure OpenAI, in your own subscription",
@@ -129,7 +129,7 @@ export default function SecurityPage() {
               <h3>In transit</h3>
               <div>
                 <p>
-                  HTTPS only. The reference hosted deployment runs on Vercel, which serves TLS 1.2 and 1.3 and redirects plain HTTP to HTTPS (<a href="https://vercel.com/docs/cdn-security/encryption">Vercel</a>). Neon requires TLS on every database
+                  HTTPS only. The reference hosted deployment is Vercel, which serves TLS 1.2 and 1.3 and redirects plain HTTP to HTTPS (<a href="https://vercel.com/docs/cdn-security/encryption">Vercel</a>). Neon requires TLS on every database
                   connection (<a href="https://neon.com/docs/security/security-overview">Neon</a>). Calls to model providers and webhooks go over HTTPS.
                 </p>
                 <p>The server edition also sends nosniff, frame-deny, strict referrer and permissions-policy headers on every response.</p>
