@@ -8,8 +8,11 @@ import { validateRationale } from "./validate";
 
 const EMPTY_VALIDATION: ValidationResult = { valid: true, checkedClaims: 0, unknownCitations: [], uncitedClaims: 0, amountMismatches: [] };
 
-function step(trace: TraceStep[], tool: string, label: string, summary: string, recordIds: string[], t0: number) {
-  trace.push({ tool, label, summary, recordIds, ms: Math.max(1, Math.round(performance.now() - t0)) });
+/** Elapsed time to the hundredth of a millisecond. Deterministic steps really do take well under 1 ms. */
+const since = (t0: number) => Math.round((performance.now() - t0) * 100) / 100;
+
+function step(trace: TraceStep[], tool: string, label: string, summary: string, recordIds: string[], t0: number, measured?: number) {
+  trace.push({ tool, label, summary, recordIds, ms: measured != null ? Math.round(measured * 100) / 100 : since(t0) });
 }
 
 function patternSummary(f: Findings, typology: string): { summary: string; ids: string[] } {
@@ -48,18 +51,20 @@ function patternSummary(f: Findings, typology: string): { summary: string; ids: 
 /** Pure triage: evidence in, recommendation out. No database access. */
 export async function runTriage(bundle: EvidenceBundle, settings: PolicySettings, provider: ModelProvider): Promise<TriageResult> {
   const trace: TraceStep[] = [];
+  const lt = bundle.loadTimings ?? {};
   let t0 = performance.now();
 
-  step(trace, "read_alert", "Read the alert", `Rule ${bundle.alert.ruleCode}: ${bundle.alert.ruleDescription}. ${bundle.alert.triggeredTxnIds.length} triggering transaction(s).`, [bundle.alert.id, ...bundle.alert.triggeredTxnIds], t0);
+  step(trace, "read_alert", "Read the alert", `Rule ${bundle.alert.ruleCode}: ${bundle.alert.ruleDescription}. ${bundle.alert.triggeredTxnIds.length} triggering transaction(s).`, [bundle.alert.id, ...bundle.alert.triggeredTxnIds], t0, lt.alert);
   t0 = performance.now();
-  step(trace, "read_kyc", "Read the customer profile", `${bundle.customer.kind}, ${bundle.customer.occupation ?? "occupation not recorded"}, risk rating ${bundle.customer.riskRating}.`, [bundle.customer.id], t0);
+  step(trace, "read_kyc", "Read the customer profile", `${bundle.customer.kind}, ${bundle.customer.occupation ?? "occupation not recorded"}, risk rating ${bundle.customer.riskRating}.`, [bundle.customer.id], t0, lt.customer);
   t0 = performance.now();
-  step(trace, "read_transactions", "Pulled transaction history", `${bundle.transactions.length} transactions in the last 90 days and ${bundle.history.length} older ones.`, [], t0);
+  step(trace, "read_transactions", "Pulled transaction history", `${bundle.transactions.length} transactions in the last 90 days and ${bundle.history.length} older ones.`, [], t0, lt.transactions);
   t0 = performance.now();
-  step(trace, "read_prior_cases", "Checked prior alerts and SARs", bundle.priorCases.length ? `${bundle.priorCases.length} prior case(s): ${bundle.priorCases.map((c) => `${c.kind} (${c.outcome})`).join(", ")}.` : "No prior cases.", bundle.priorCases.map((c) => c.id), t0);
+  step(trace, "read_prior_cases", "Checked prior alerts and SARs", bundle.priorCases.length ? `${bundle.priorCases.length} prior case(s): ${bundle.priorCases.map((c) => `${c.kind} (${c.outcome})`).join(", ")}.` : "No prior cases.", bundle.priorCases.map((c) => c.id), t0, lt.priorCases);
 
   t0 = performance.now();
   const findings = computeFindings(bundle, settings);
+  const findingsMs = since(t0);
   step(
     trace,
     "screen_watchlist",
@@ -67,7 +72,9 @@ export async function runTriage(bundle: EvidenceBundle, settings: PolicySettings
     findings.watchlistHits.length ? `${findings.watchlistHits.length} candidate(s); top similarity ${findings.watchlistHits[0].similarity.toFixed(2)}.` : "No candidates at or above 0.80 similarity.",
     findings.watchlistHits.map((h) => h.watchlistId),
     t0,
+    (lt.watchlist ?? 0) + findingsMs,
   );
+  t0 = performance.now();
   step(
     trace,
     "scan_untrusted_text",
@@ -76,6 +83,7 @@ export async function runTriage(bundle: EvidenceBundle, settings: PolicySettings
     findings.injection.map((h) => h.txnId),
     t0,
   );
+  t0 = performance.now();
   const ps = patternSummary(findings, bundle.alert.typology);
   step(trace, "detect_patterns", "Ran typology checks", ps.summary, ps.ids, t0);
 
@@ -91,7 +99,7 @@ export async function runTriage(bundle: EvidenceBundle, settings: PolicySettings
 
   if (pre.skipModel) {
     const locked = pre.skipModel === "lock";
-    step(trace, "model_assess", "Model not called", locked ? "Alert locked to human review before any model call." : "Agent abstained: not enough data to support a recommendation.", [], performance.now());
+    step(trace, "model_assess", "Model not called", locked ? "Alert locked to human review before any model call." : "Agent abstained: not enough data to support a recommendation.", [], performance.now(), 0);
     return {
       ...base,
       outcome: locked ? "locked" : "abstained",

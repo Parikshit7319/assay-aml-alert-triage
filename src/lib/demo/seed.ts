@@ -7,10 +7,11 @@ import { triageAlert } from "@/lib/engine/run";
 import { DEFAULT_POLICY } from "@/lib/engine/policy";
 import { DAY, HOUR, hashString, newId, prng } from "@/lib/util";
 import { scenarioToBundle } from "./bundle";
+import { DEMO_TTL_HOURS } from "./constants";
 import { syntheticRollups } from "./rollups";
 import { buildScenarios, type Scenario } from "./scenarios";
 
-export const DEMO_TTL_HOURS = 24;
+export { DEMO_TTL_HOURS };
 export const DEMO_ACTOR = "You (demo analyst)";
 
 async function insertChunked<T>(rows: T[], size: number, fn: (chunk: T[]) => Promise<unknown>) {

@@ -3,11 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertWorkspace } from "@/components/app/AlertWorkspace";
 import { alerts, decisions, triageRuns } from "@/lib/db/schema";
+import { loadCollab } from "@/lib/collab";
+import { OPEN, queueRows } from "@/lib/queries";
 import { computeFindings } from "@/lib/engine/detectors";
 import { loadBundle } from "@/lib/engine/run";
 import { requireTenant } from "@/lib/tenant";
 import { OVERRIDE_REASONS } from "@/lib/workflow";
 import { decideAction, markSuspiciousAction, rerunAction, sarDecisionAction } from "../../actions";
+import { addNote, assignAlert } from "../../collab-actions";
 
 export default async function AlertPage(props: PageProps<"/app/alerts/[id]">) {
   const { id } = await props.params;
@@ -30,6 +33,11 @@ export default async function AlertPage(props: PageProps<"/app/alerts/[id]">) {
   const open = ["new", "triaged", "locked"].includes(alert.status);
   const shadow = open && t.ws.settings.autonomy[alert.typology] === 0;
   const iso = (d: Date | null) => (d ? d.toISOString() : null);
+  const [collab, queue] = await Promise.all([loadCollab(t.db, t.ws.id, id), queueRows(t.db, t.ws.id, OPEN)]);
+  const order = queue.map((r) => r.id);
+  const idx = order.indexOf(id);
+  const nextId = idx >= 0 ? order[idx + 1] : order[0];
+  const prevId = idx > 0 ? order[idx - 1] : null;
 
   return (
     <>
@@ -37,7 +45,18 @@ export default async function AlertPage(props: PageProps<"/app/alerts/[id]">) {
         <Link href="/app">Alert queue</Link>
       </p>
       <AlertWorkspace
-        actions={{ decide: decideAction, markSuspicious: markSuspiciousAction, sarDecision: sarDecisionAction, rerun: rerunAction }}
+        actions={{ decide: decideAction, markSuspicious: markSuspiciousAction, sarDecision: sarDecisionAction, rerun: rerunAction, assign: assignAlert, addNote }}
+        collab={{ members: collab.members, assigneeId: collab.assigneeId, currentUserId: t.user?.id, notes: collab.notes }}
+        ask={run ? { bundle, findings, result: run } : undefined}
+        institution={{ name: t.ws.name, contact: t.actor }}
+        customerHref={`/app/customers/${bundle.customer.id}`}
+        nav={{ nextHref: nextId && nextId !== id ? `/app/alerts/${nextId}` : null, prevHref: prevId ? `/app/alerts/${prevId}` : null, position: idx >= 0 ? `${idx + 1} of ${order.length}` : undefined }}
+        headerExtra={
+          <span className="ws-links">
+            <a href={`/app/alerts/${id}/sar`}>SAR draft (Word)</a>
+            <a href={`/app/alerts/${id}/sar?format=html`}>Printable SAR draft</a>
+          </span>
+        }
         alert={{
           id: alert.id,
           externalId: alert.externalId,
@@ -69,6 +88,7 @@ export default async function AlertPage(props: PageProps<"/app/alerts/[id]">) {
                 provider: run.provider,
                 model: run.model,
                 policyVersion: run.policyVersion,
+                promptVersion: run.promptVersion,
                 outcome: run.outcome,
                 modelRecommendation: run.modelRecommendation,
                 recommendation: run.recommendation,

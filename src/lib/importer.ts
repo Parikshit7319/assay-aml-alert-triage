@@ -1,7 +1,6 @@
 import "server-only";
 import { and, eq, inArray } from "drizzle-orm";
 import Papa from "papaparse";
-import { z } from "zod";
 import { appendAudit } from "./audit";
 import type { DB } from "./db/client";
 import { alerts, customers, priorCases, transactions, workspaces, type Typology } from "./db/schema";
@@ -11,61 +10,9 @@ import { DAY, newId } from "./util";
 
 type Workspace = typeof workspaces.$inferSelect;
 
-const isoDate = z.string().refine((s) => !Number.isNaN(Date.parse(s)), "must be an ISO 8601 date");
+import { AlertPayload, CSV_COLUMNS, inferTypology } from "./import-schema";
+export { AlertPayload, CSV_COLUMNS, inferTypology };
 
-export const AlertPayload = z.object({
-  alert: z.object({
-    external_id: z.string().min(1).max(120),
-    rule_code: z.string().min(1).max(60),
-    rule_description: z.string().max(300).optional(),
-    typology: z.enum(["structuring", "funnel_account", "high_risk_wire", "sanctions_name", "payroll_pattern", "seasonal_cash", "other"]).optional(),
-    created_at: isoDate.optional(),
-    triggered_transaction_ids: z.array(z.string()).max(500).optional(),
-  }),
-  customer: z.object({
-    external_id: z.string().min(1).max(120),
-    name: z.string().min(1).max(200),
-    type: z.enum(["individual", "business"]),
-    occupation: z.string().max(200).optional(),
-    country: z.string().length(2).optional(),
-    onboarded_at: isoDate.optional(),
-    risk_rating: z.enum(["low", "medium", "high"]).optional(),
-    expected_monthly_volume: z.number().nonnegative().optional(),
-    kyc_notes: z.string().max(2000).optional(),
-  }),
-  transactions: z
-    .array(
-      z.object({
-        external_id: z.string().min(1).max(120),
-        timestamp: isoDate,
-        amount: z.number().positive(),
-        currency: z.string().length(3).optional(),
-        direction: z.enum(["in", "out"]),
-        channel: z.enum(["cash", "wire", "ach", "p2p", "card", "check"]),
-        counterparty_name: z.string().max(200).optional(),
-        counterparty_country: z.string().length(2).optional(),
-        location: z.string().max(120).optional(),
-        memo: z.string().max(500).optional(),
-      }),
-    )
-    .max(5000),
-  prior_cases: z
-    .array(z.object({ kind: z.enum(["alert", "sar"]), opened_at: isoDate, outcome: z.string().max(120), summary: z.string().max(1000) }))
-    .max(200)
-    .optional(),
-});
-export type AlertPayload = z.infer<typeof AlertPayload>;
-
-export function inferTypology(ruleCode: string, description = ""): Typology {
-  const s = `${ruleCode} ${description}`.toLowerCase();
-  if (/struct|ctr|below.?threshold/.test(s)) return "structuring";
-  if (/funnel|p2p|many senders|pass.?through/.test(s)) return "funnel_account";
-  if (/sanction|watchlist|ofac|\bwl\b|name/.test(s)) return "sanctions_name";
-  if (/geo|high.?risk|jurisdiction/.test(s) && /wire/.test(s)) return "high_risk_wire";
-  if (/payroll|ach.?vol/.test(s)) return "payroll_pattern";
-  if (/season|cash.?vol/.test(s)) return "seasonal_cash";
-  return "other";
-}
 
 /** Writes one alert with its customer and evidence. Returns the new alert id, or null if it already exists. */
 export async function ingestAlert(db: DB, ws: Workspace, p: AlertPayload, source: "csv" | "api"): Promise<string | null> {
@@ -109,7 +56,7 @@ export async function ingestAlert(db: DB, ws: Workspace, p: AlertPayload, source
   const fresh = p.transactions
     .filter((t) => !idByExt.has(t.external_id))
     .map((t) => {
-      const id = newId("TXN");
+      const id = newId("TXN", 8);
       idByExt.set(t.external_id, id);
       return {
         id,
@@ -157,32 +104,7 @@ export async function ingestAlert(db: DB, ws: Workspace, p: AlertPayload, source
 const num = (v: string | undefined) => (v == null || v.trim() === "" ? undefined : Number(v.replace(/[$,]/g, "")));
 const opt = (v: string | undefined) => (v == null || v.trim() === "" ? undefined : v.trim());
 
-export const CSV_COLUMNS = [
-  "alert_id",
-  "rule_code",
-  "rule_description",
-  "typology",
-  "alert_created_at",
-  "customer_id",
-  "customer_name",
-  "customer_type",
-  "occupation",
-  "country",
-  "onboarded_at",
-  "risk_rating",
-  "expected_monthly_volume",
-  "kyc_notes",
-  "txn_id",
-  "txn_timestamp",
-  "amount",
-  "direction",
-  "channel",
-  "counterparty_name",
-  "counterparty_country",
-  "location",
-  "memo",
-  "triggered",
-] as const;
+
 
 /** Parses the one-row-per-transaction CSV, groups rows by alert, ingests and triages. */
 export async function importAlertsCsv(db: DB, ws: Workspace, csv: string, actor: string) {

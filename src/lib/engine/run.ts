@@ -5,8 +5,10 @@ import type { DB } from "@/lib/db/client";
 import { alerts, customers, decisions, priorCases, qaReviews, transactions, triageRuns, watchlistEntries, workspaces } from "@/lib/db/schema";
 import { canRun, recordUsage } from "@/lib/metering";
 import { DAY, newId } from "@/lib/util";
+import { queueWebhook } from "@/lib/webhooks";
 import { runTriage } from "./pipeline";
 import { DEFAULT_HIGH_RISK_COUNTRIES } from "./policy";
+import { PROMPT_VERSION } from "./prompt";
 import { resolveProvider } from "./providers";
 import type { EvidenceBundle, TriageResult } from "./types";
 
@@ -15,30 +17,41 @@ type Workspace = typeof workspaces.$inferSelect;
 export const agentIdentity = (ws: Workspace) => `triage-agent@${ws.id.toLowerCase()}`;
 
 export async function loadBundle(db: DB, ws: Workspace, alertId: string): Promise<EvidenceBundle> {
-  const [alert] = await db.select().from(alerts).where(and(eq(alerts.id, alertId), eq(alerts.workspaceId, ws.id)));
+  const timed = async <T,>(fn: () => Promise<T>): Promise<[T, number]> => {
+    const t = performance.now();
+    const v = await fn();
+    return [v, performance.now() - t];
+  };
+  const [[alert], alertMs] = await timed(() => db.select().from(alerts).where(and(eq(alerts.id, alertId), eq(alerts.workspaceId, ws.id))));
   if (!alert) throw new Error(`Alert ${alertId} not found`);
-  const [customer] = await db.select().from(customers).where(and(eq(customers.id, alert.customerId), eq(customers.workspaceId, ws.id)));
+  const [[customer], customerMs] = await timed(() => db.select().from(customers).where(and(eq(customers.id, alert.customerId), eq(customers.workspaceId, ws.id))));
   const asOf = alert.createdAt.getTime();
   const windowStart = new Date(asOf - 90 * DAY);
   const historyStart = new Date(asOf - 3 * 365 * DAY);
   const end = new Date(asOf + 1);
-  const [recent, history, cases, watchlist] = await Promise.all([
-    db
+  const [[recent, recentMs], [history, historyMs], [cases, casesMs], [watchlist, watchlistMs]] = await Promise.all([
+    timed(() =>
+      db
       .select()
       .from(transactions)
       .where(and(eq(transactions.workspaceId, ws.id), eq(transactions.customerId, customer.id), gte(transactions.ts, windowStart), lt(transactions.ts, end)))
       .orderBy(asc(transactions.ts)),
-    db
-      .select()
-      .from(transactions)
-      .where(and(eq(transactions.workspaceId, ws.id), eq(transactions.customerId, customer.id), gte(transactions.ts, historyStart), lt(transactions.ts, windowStart)))
-      .orderBy(asc(transactions.ts)),
-    db
-      .select()
-      .from(priorCases)
-      .where(and(eq(priorCases.workspaceId, ws.id), eq(priorCases.customerId, customer.id), lt(priorCases.openedAt, alert.createdAt)))
-      .orderBy(asc(priorCases.openedAt)),
-    db.select().from(watchlistEntries).where(eq(watchlistEntries.workspaceId, ws.id)),
+    ),
+    timed(() =>
+      db
+        .select()
+        .from(transactions)
+        .where(and(eq(transactions.workspaceId, ws.id), eq(transactions.customerId, customer.id), gte(transactions.ts, historyStart), lt(transactions.ts, windowStart)))
+        .orderBy(asc(transactions.ts)),
+    ),
+    timed(() =>
+      db
+        .select()
+        .from(priorCases)
+        .where(and(eq(priorCases.workspaceId, ws.id), eq(priorCases.customerId, customer.id), lt(priorCases.openedAt, alert.createdAt)))
+        .orderBy(asc(priorCases.openedAt)),
+    ),
+    timed(() => db.select().from(watchlistEntries).where(eq(watchlistEntries.workspaceId, ws.id))),
   ]);
   return {
     alert: {
@@ -55,6 +68,7 @@ export async function loadBundle(db: DB, ws: Workspace, alertId: string): Promis
     priorCases: cases,
     watchlist,
     highRiskCountries: DEFAULT_HIGH_RISK_COUNTRIES,
+    loadTimings: { alert: alertMs, customer: customerMs, transactions: Math.max(recentMs, historyMs), priorCases: casesMs, watchlist: watchlistMs },
   };
 }
 
@@ -106,6 +120,7 @@ export async function triageAlert(
     policyHits: result.policyHits,
     validation: result.validation,
     narrative: result.narrative,
+    promptVersion: PROMPT_VERSION,
     autoCloseEligible: result.autoCloseEligible,
     batchEligible: result.batchEligible,
     inputTokens: result.inputTokens,
@@ -143,6 +158,7 @@ export async function triageAlert(
       provider: result.provider,
       model: result.model,
       policyVersion: ws.settings.version,
+      promptVersion: PROMPT_VERSION,
       policyHits: result.policyHits.map((h) => h.rule),
       citationsValid: result.validation.valid,
       initiatedBy: opts.initiatedBy ?? "system",
@@ -178,6 +194,7 @@ export async function triageAlert(
       ts: decidedAt,
       payload: { runId, confidence: result.confidence, autonomyLevel: ws.settings.autonomy[bundle.alert.typology] },
     });
+    await queueWebhook(db, ws, "alert.closed", alertId);
   }
 
   return { runId, result, autoClosed };

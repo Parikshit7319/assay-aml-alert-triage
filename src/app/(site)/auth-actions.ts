@@ -5,9 +5,9 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAuth } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
-import { leads, workspaceMembers, workspaces } from "@/lib/db/schema";
+import { workspaceMembers, workspaces } from "@/lib/db/schema";
+import { insertLead, parseLead } from "@/lib/leads";
 import { DEMO_COOKIE } from "@/lib/tenant";
-import { newId } from "@/lib/util";
 
 export interface FormState {
   error?: string;
@@ -70,27 +70,18 @@ export async function socialSignInAction(fd: FormData) {
 }
 
 export async function pilotAction(_: FormState, fd: FormData): Promise<FormState> {
-  const name = str(fd, "name");
-  const email = str(fd, "email");
-  const company = str(fd, "company");
-  if (!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !company) return { error: "Name, a work email and company are required." };
-  if (str(fd, "website")) return { ok: "Thanks. We will be in touch within two business days." }; // honeypot
-  const row = {
-    id: newId("LEAD"),
-    name: name.slice(0, 120),
-    email: email.slice(0, 200),
-    company: company.slice(0, 200),
-    role: str(fd, "role").slice(0, 120) || null,
-    segment: str(fd, "segment").slice(0, 60) || null,
-    monthlyAlerts: Number(str(fd, "monthlyAlerts")) || null,
-    monitoringSystem: str(fd, "monitoringSystem").slice(0, 120) || null,
-    message: str(fd, "message").slice(0, 2000) || null,
-  };
-  const db = await getDb();
-  await db.insert(leads).values(row);
-  const hook = process.env.LEAD_WEBHOOK_URL;
-  if (hook) {
-    fetch(hook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: `New pilot request: ${row.name}, ${row.company} (${row.email})`, ...row }) }).catch(() => {});
-  }
-  return { ok: "Thanks. We will reply within two business days with a short scoping call." };
+  const parsed = parseLead({
+    name: str(fd, "name"),
+    email: str(fd, "email"),
+    company: str(fd, "company"),
+    role: str(fd, "role"),
+    segment: str(fd, "segment"),
+    alerts_per_month: str(fd, "monthlyAlerts"),
+    monitoring_system: str(fd, "monitoringSystem"),
+    message: str(fd, "message"),
+    website: str(fd, "website"),
+  });
+  if (!parsed.ok) return { error: parsed.error };
+  const r = await insertLead(await getDb(), parsed.data);
+  return r.ok ? { ok: r.message } : { error: r.error };
 }

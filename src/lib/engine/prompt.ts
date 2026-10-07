@@ -13,6 +13,24 @@ Rules you must follow:
 7. When you recommend "escalate", write a draft narrative for the L2 investigator covering who, what, when, where, and why the activity is unusual, with record ids in brackets. Otherwise set narrative to null.
 8. Confidence is your probability that a careful senior analyst would agree with your recommendation.`;
 
+/** 32-bit FNV-1a, as 8 hex characters. Tiny, pure and stable across runtimes. */
+function fnv1a(text: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(16).padStart(8, "0");
+}
+
+/**
+ * Version of the system prompt template, for example "p-1a2b3c4d". Computed from
+ * the prompt text at load, so any edit to the prompt changes it. Stored on every
+ * triage run and in the audit log so a recommendation can be traced to the exact
+ * instructions the model was given.
+ */
+export const PROMPT_VERSION = `p-${fnv1a(SYSTEM_PROMPT)}`;
+
 function fmtTxn(t: ModelInput["bundle"]["transactions"][number]) {
   const memo = t.memo ? ` memo=<untrusted>${t.memo.replace(/[<>]/g, "")}</untrusted>` : "";
   const cp = t.counterpartyName ? ` counterparty=<untrusted>${t.counterpartyName.replace(/[<>]/g, "")}</untrusted>` : "";

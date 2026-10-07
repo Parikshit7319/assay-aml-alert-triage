@@ -1,7 +1,8 @@
+import { Time } from "@/components/workbench/Time";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { alerts, customers, triageRuns } from "@/lib/db/schema";
-import { daysLeft, fmtDate, STATUS_LABEL, TYPOLOGY_LABEL } from "@/lib/labels";
+import { daysLeft, STATUS_LABEL, TYPOLOGY_LABEL } from "@/lib/labels";
 import { requireTenant } from "@/lib/tenant";
 
 export default async function L2Page() {
@@ -57,7 +58,7 @@ export default async function L2Page() {
                           <span className="cell-sub">Not started</span>
                         ) : (
                           <span className={left <= 7 ? "sla-late" : undefined}>
-                            {left} days, due {fmtDate(alert.sarDueAt!)}
+                            {left} days, due <Time value={alert.sarDueAt!} format="date" />
                           </span>
                         )}
                       </td>

@@ -1,12 +1,13 @@
+import { Time } from "@/components/workbench/Time";
 import { desc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { verifyChain } from "@/lib/audit";
 import { auditEvents } from "@/lib/db/schema";
-import { fmtDateTime } from "@/lib/labels";
+
 import { requireTenant } from "@/lib/tenant";
 
 function summarize(payload: Record<string, unknown>): string {
-  const keys = ["recommendation", "outcome", "confidence", "model", "policyVersion", "reasonCode", "note", "sarDueAt", "from", "to", "alerts", "plan", "status"];
+  const keys = ["recommendation", "outcome", "confidence", "model", "policyVersion", "promptVersion", "reasonCode", "note", "kind", "mentions", "sarDueAt", "from", "to", "alerts", "plan", "status", "event", "host", "error", "format"];
   return keys
     .filter((k) => payload[k] != null && payload[k] !== "")
     .map((k) => `${k}: ${typeof payload[k] === "object" ? JSON.stringify(payload[k]) : String(payload[k])}`)
@@ -28,13 +29,13 @@ export default async function AuditPage() {
           <h1>Audit log</h1>
           <p>Append-only. Each event stores the SHA-256 hash of the event before it, so an edit or deletion anywhere breaks the chain from that point on.</p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Link className="btn btn-outline btn-small" href="/app/audit/export?format=csv">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <a className="btn btn-outline btn-small" href="/app/audit/export?format=csv">
             Export CSV
-          </Link>
-          <Link className="btn btn-outline btn-small" href="/app/audit/export?format=json">
+          </a>
+          <a className="btn btn-outline btn-small" href="/app/export/audit.json">
             Export JSON
-          </Link>
+          </a>
         </div>
       </div>
       <div className="panel chain" role="status">
@@ -46,6 +47,12 @@ export default async function AuditPage() {
         <span className="hash">Head hash {chain.headHash.slice(0, 16)}...{chain.headHash.slice(-8)}</span>
         <span className="decide__hint">Verified just now by recomputing every hash from the first event.</span>
       </div>
+      <nav className="panel chain" aria-label="Other exports">
+        <span className="decide__hint">More exports for review:</span>
+        <a href="/app/export/decisions.csv">Decisions (CSV)</a>
+        <a href="/app/export/qa.csv">QA reviews (CSV)</a>
+        <a href="/app/export/model-risk">Model risk documentation pack</a>
+      </nav>
       <section className="panel table-wrap">
         <table className="table">
           <thead>
@@ -64,7 +71,7 @@ export default async function AuditPage() {
               <tr key={e.seq}>
                 <td className="r num">{e.seq}</td>
                 <td className="num" style={{ whiteSpace: "nowrap" }}>
-                  {fmtDateTime(e.ts)}
+                  <Time value={e.ts} />
                 </td>
                 <td>
                   {e.actorName}

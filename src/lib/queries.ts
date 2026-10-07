@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { DB } from "./db/client";
-import { alerts, customers, qaReviews, triageRuns, type AlertStatus } from "./db/schema";
+import { alerts, customers, qaReviews, triageRuns, user, type AlertStatus } from "./db/schema";
 
 export const OPEN: AlertStatus[] = ["new", "triaged", "locked"];
 
@@ -39,12 +39,23 @@ export async function queueRows(db: DB, wsId: string, statuses: AlertStatus[]) {
       riskScore: triageRuns.riskScore,
       batchEligible: triageRuns.batchEligible,
       outcome: triageRuns.outcome,
+      customerId: alerts.customerId,
+      assigneeId: alerts.assigneeId,
+      assigneeName: user.name,
     })
     .from(alerts)
     .innerJoin(customers, eq(customers.id, alerts.customerId))
     .leftJoin(triageRuns, eq(triageRuns.id, alerts.latestRunId))
+    .leftJoin(user, eq(user.id, alerts.assigneeId))
     .where(and(eq(alerts.workspaceId, wsId), inArray(alerts.status, statuses)))
     .orderBy(desc(triageRuns.riskScore), desc(alerts.createdAt))
     .limit(500);
 }
-export type QueueRow = Awaited<ReturnType<typeof queueRows>>[number];
+type QueueRowFull = Awaited<ReturnType<typeof queueRows>>[number];
+type CollabFields = "customerId" | "assigneeId" | "assigneeName";
+/**
+ * One queue row. The server always fills customerId, assigneeId and
+ * assigneeName; they are optional in the type so rows built in the browser
+ * demo (which has no members) still fit.
+ */
+export type QueueRow = Omit<QueueRowFull, CollabFields> & Partial<Pick<QueueRowFull, CollabFields>>;

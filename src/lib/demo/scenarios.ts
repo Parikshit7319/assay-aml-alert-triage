@@ -60,7 +60,7 @@ class Ctx {
 }
 
 function txn(p: Partial<TxnRecord> & Pick<TxnRecord, "ts" | "amountCents" | "direction" | "channel">): TxnRecord {
-  return { id: newId("TXN"), counterpartyName: null, counterpartyCountry: null, branch: null, memo: null, ...p };
+  return { id: newId("TXN", 8), counterpartyName: null, counterpartyCountry: null, branch: null, memo: null, ...p };
 }
 
 function customer(p: Partial<CustomerRecord> & Pick<CustomerRecord, "name" | "kind">): CustomerRecord {
@@ -137,7 +137,7 @@ export function heroStructuring(c: Ctx, alertAt: Date): Scenario {
   };
 }
 
-function structuringVariant(c: Ctx, alertAt: Date, variant: "same_day" | "note" | "consistent_business" | "one_branch"): Scenario {
+export function structuringVariant(c: Ctx, alertAt: Date, variant: "same_day" | "note" | "consistent_business" | "one_branch"): Scenario {
   const isBiz = variant === "consistent_business";
   const name = isBiz ? `${c.rng.pick(["Corner", "Lucky", "Sunrise", "Gulf"])} ${c.rng.pick(["Food Mart", "Express Mart", "Grocery"])} LLC` : c.person();
   const cust = customer({
@@ -197,7 +197,7 @@ function structuringVariant(c: Ctx, alertAt: Date, variant: "same_day" | "note" 
 
 /* ------------------------------ Funnel accounts ------------------------- */
 
-function funnelScenario(c: Ctx, alertAt: Date, variant: "high_risk" | "domestic_out" | "benign"): Scenario {
+export function funnelScenario(c: Ctx, alertAt: Date, variant: "high_risk" | "domestic_out" | "benign"): Scenario {
   const name = c.person();
   const cust = customer({
     name,
@@ -258,7 +258,7 @@ function funnelScenario(c: Ctx, alertAt: Date, variant: "high_risk" | "domestic_
 
 /* ------------------------------ High-risk wires ------------------------- */
 
-function wireScenario(c: Ctx, alertAt: Date, variant: "first_time" | "documented"): Scenario {
+export function wireScenario(c: Ctx, alertAt: Date, variant: "first_time" | "documented"): Scenario {
   const documented = variant === "documented";
   const cust = customer({
     name: documented ? `${c.rng.pick(["Open Hands", "Clearwater", "Common Thread"])} Relief Foundation` : c.person(),
@@ -316,7 +316,7 @@ function wireScenario(c: Ctx, alertAt: Date, variant: "first_time" | "documented
 
 /* ------------------------------ Watchlist names ------------------------- */
 
-function sanctionsScenario(c: Ctx, alertAt: Date, variant: "close_match" | "different_country" | "customer_name"): Scenario {
+export function sanctionsScenario(c: Ctx, alertAt: Date, variant: "close_match" | "different_country" | "customer_name"): Scenario {
   const cp =
     variant === "close_match"
       ? { name: "Dragomir Volkanoff", country: "RU" }
@@ -376,7 +376,7 @@ const PAYROLL_BIZ = [
   ["Bluebonnet Logistics LLC", "Freight brokerage"],
 ] as const;
 
-function payrollScenario(c: Ctx, alertAt: Date, idx: number, irregular: boolean): Scenario {
+export function payrollScenario(c: Ctx, alertAt: Date, idx: number, irregular: boolean): Scenario {
   const [name, occ] = PAYROLL_BIZ[idx % PAYROLL_BIZ.length];
   const staff = Array.from({ length: c.rng.int(7, 14) }, () => ({ name: c.person(), pay: c.rng.int(1600, 4200) }));
   const cust = customer({
@@ -432,7 +432,7 @@ const SEASONAL_BIZ = [
   ["Willow Bend Farm Market", "Farm market, peak fall harvest"],
 ] as const;
 
-function seasonalScenario(c: Ctx, alertAt: Date, idx: number, variant: "match" | "big_spike" | "no_history_spike"): Scenario {
+export function seasonalScenario(c: Ctx, alertAt: Date, idx: number, variant: "match" | "big_spike" | "no_history_spike"): Scenario {
   const [name, occ] = SEASONAL_BIZ[idx % SEASONAL_BIZ.length];
   const base = c.rng.int(9000, 22000); // off-season monthly revenue
   const cust = customer({
@@ -477,7 +477,7 @@ function seasonalScenario(c: Ctx, alertAt: Date, idx: number, variant: "match" |
 
 /* ------------------------------ Thin data, injection, other -------------- */
 
-function thinScenario(c: Ctx, alertAt: Date): Scenario {
+export function thinScenario(c: Ctx, alertAt: Date): Scenario {
   const cust = customer({ name: c.person(), kind: "individual", onboardedAt: daysBefore(alertAt, c.rng.int(10, 20)), riskRating: "medium" });
   const txns = Array.from({ length: c.rng.int(3, 5) }, (_, i) =>
     txn({ ts: daysBefore(alertAt, i * 3 + 1, 12), amountCents: dollars(c.rng.int(2500, 7800)), direction: i % 2 ? "out" : "in", channel: i % 2 ? "p2p" : "ach", counterpartyName: c.person() }),
@@ -491,7 +491,7 @@ function thinScenario(c: Ctx, alertAt: Date): Scenario {
   };
 }
 
-function injectionScenario(c: Ctx, alertAt: Date, variant: "memo" | "counterparty"): Scenario {
+export function injectionScenario(c: Ctx, alertAt: Date, variant: "memo" | "counterparty"): Scenario {
   const cust = customer({
     name: c.person(),
     kind: "individual",
@@ -521,7 +521,7 @@ function injectionScenario(c: Ctx, alertAt: Date, variant: "memo" | "counterpart
   };
 }
 
-function volumeSpikeScenario(c: Ctx, alertAt: Date): Scenario {
+export function volumeSpikeScenario(c: Ctx, alertAt: Date): Scenario {
   const cust = customer({ name: c.person(), kind: "individual", occupation: "Nurse", onboardedAt: daysBefore(alertAt, 800), riskRating: "low", expectedMonthlyVolumeCents: dollars(6500) });
   const txns = individualBackground(c, alertAt, 12, 2600, "Memorial Hermann Payroll");
   const extra = Array.from({ length: 6 }, (_, i) =>

@@ -3,7 +3,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db/client";
-import { createDemoWorkspace, DEMO_TTL_HOURS } from "@/lib/demo/seed";
+import { DEMO_TTL_HOURS } from "@/lib/demo/constants";
+import { createDemoWorkspace } from "@/lib/demo/seed";
 import { DEMO_COOKIE, getTenant } from "@/lib/tenant";
 
 /** POST-only on purpose: crawlers following links never create workspaces. */

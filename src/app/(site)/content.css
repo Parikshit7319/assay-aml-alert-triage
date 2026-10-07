@@ -1,0 +1,687 @@
+/* Content pages: personas, about, day in the queue, insights, security,
+   integrations. Every class here is prefixed c- so it cannot collide with
+   site.css or the app styles. Built on the tokens in globals.css. */
+
+/* ---------- Shared bits ---------- */
+.c-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pencil);
+}
+.c-h3 {
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.c-note {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--pencil);
+}
+.c-stack > * + * {
+  margin-top: 16px;
+}
+.c-modeled {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pencil);
+  vertical-align: 2px;
+  white-space: nowrap;
+}
+.sec--navy .c-modeled,
+.ph--navy .c-modeled {
+  border-color: rgba(179, 191, 212, 0.45);
+  color: var(--on-navy-2);
+}
+
+/* ---------- Persona pages ---------- */
+.c-shot-copy h2 {
+  font-size: clamp(26px, 2.8vw, 36px);
+}
+.c-shot-copy p {
+  margin-top: 14px;
+  color: var(--ink-2);
+}
+.c-shot-copy .checks {
+  margin-top: 20px;
+  font-size: 15.5px;
+}
+.c-quote-split {
+  display: grid;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+  gap: 56px;
+  align-items: start;
+  margin-top: 56px;
+}
+.c-quote-split .quote footer a {
+  color: inherit;
+}
+.c-quote-split p + p {
+  margin-top: 12px;
+}
+.c-quote-split p {
+  color: var(--ink-2);
+}
+.c-not {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 56px;
+  align-items: start;
+}
+.c-not h2 {
+  font-size: clamp(26px, 2.8vw, 36px);
+}
+.c-not > div > p {
+  margin-top: 14px;
+  color: var(--ink-2);
+}
+.sec--navy .c-not > div > p {
+  color: var(--on-navy-2);
+}
+.c-not .checks {
+  color: var(--ink);
+  padding: 24px 28px;
+  border: 1px solid var(--rule-strong);
+  border-top: 4px solid var(--red);
+  border-radius: var(--radius-m);
+  background: var(--sheet);
+  font-weight: 600;
+}
+.c-not .checks small {
+  display: block;
+  margin-top: 2px;
+  font-weight: 400;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+
+/* Time bar: one horizontal bar split into labeled shares */
+.c-bar {
+  margin: 0;
+}
+.c-bar__track {
+  display: flex;
+  height: 44px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+  background: var(--sheet);
+}
+.c-bar__seg {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.c-bar__seg--admin {
+  background: repeating-linear-gradient(135deg, var(--paper-deep) 0 6px, var(--sheet) 6px 12px);
+  color: var(--ink-2);
+}
+.c-bar__seg--judge {
+  background: var(--blue);
+  color: var(--white);
+}
+.c-bar figcaption {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--pencil);
+}
+
+/* Model risk: what gets recorded, with the honest gaps */
+.c-versioned td:first-child {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.c-gap {
+  color: var(--amber);
+  font-weight: 600;
+}
+.c-sections {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: sec;
+  columns: 2;
+  column-gap: 32px;
+}
+.c-sections li {
+  counter-increment: sec;
+  break-inside: avoid;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 15px;
+}
+.c-sections li::before {
+  content: counter(sec);
+  display: inline-block;
+  width: 26px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--blue);
+}
+.c-thresholds {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 2px solid var(--ink);
+}
+.c-thresholds > div {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  padding: 18px 18px 18px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.c-thresholds > div:not(:nth-child(3n + 1)) {
+  padding-left: 18px;
+  border-left: 1px solid var(--rule);
+}
+.c-thresholds dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.c-thresholds dt {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+/* ---------- Design partner block ---------- */
+.c-dp__counts {
+  margin: 20px 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 2px solid var(--ink);
+}
+.c-dp__counts > div {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  padding: 18px 18px 18px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.c-dp__counts > div:nth-child(2n) {
+  padding-left: 18px;
+  border-left: 1px solid var(--rule);
+}
+.c-dp__counts dd {
+  margin: 0;
+}
+.c-dp__counts dt {
+  margin-top: 8px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.c-dp__slots {
+  display: flex;
+  gap: 10px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.c-dp__slots li {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  font-size: 13.5px;
+  color: var(--pencil);
+}
+.c-dp__slots b {
+  display: block;
+  font-size: 15px;
+  color: var(--ink);
+}
+.c-dp__program > h3 {
+  margin-top: 26px;
+}
+.c-dp__program > h3:first-child {
+  margin-top: 0;
+}
+.c-dp__program > p,
+.c-dp__program > ul {
+  margin-top: 10px;
+  color: var(--ink-2);
+  font-size: 15.5px;
+}
+.c-dp__program ol {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: 15.5px;
+}
+.c-dp__demand {
+  margin-top: 18px;
+  font-weight: 600;
+}
+
+/* ---------- About ---------- */
+.c-founder {
+  padding: 32px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-l);
+  background: var(--sheet);
+}
+.c-founder dl {
+  margin: 18px 0 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 18px;
+  font-size: 15px;
+}
+.c-founder dt {
+  color: var(--pencil);
+}
+.c-founder dd {
+  margin: 0;
+}
+.c-beliefs h3 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+/* ---------- Day in the queue ---------- */
+.c-shift-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 0 56px;
+  border-top: 1px solid var(--rule-strong);
+  border-bottom: 1px solid var(--rule);
+}
+.c-shift-meta > div {
+  padding: 16px 18px 16px 0;
+}
+.c-shift-meta > div + div {
+  padding-left: 18px;
+  border-left: 1px solid var(--rule);
+}
+.c-shift-meta dt {
+  font-size: 13px;
+  color: var(--pencil);
+}
+.c-shift-meta dd {
+  margin: 4px 0 0;
+  font-weight: 650;
+}
+.c-alert-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 3px;
+  background: var(--paper-deep);
+  color: var(--ink-2);
+  font: 600 12px/1.6 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  vertical-align: 2px;
+}
+.c-math td:first-child {
+  width: 46%;
+}
+.c-math tfoot td {
+  border-top: 2px solid var(--ink);
+  font-weight: 700;
+}
+
+/* ---------- Insights ---------- */
+.c-post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.c-sources {
+  margin: 14px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.c-author {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
+}
+.c-author img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-deep);
+}
+.c-author p {
+  margin-top: 4px;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.c-post .post__body blockquote {
+  margin: 20px 0;
+  padding: 2px 0 2px 20px;
+  border-left: 3px solid var(--highlight-solid);
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1.45;
+}
+.c-post .post__body .tbl {
+  margin: 8px 0 24px;
+  font-size: 15.5px;
+}
+.c-post .post__body .tbl td,
+.c-post .post__body .tbl th {
+  font-size: 15.5px;
+}
+.c-post ol.c-controls {
+  padding-left: 22px;
+}
+.c-post ol.c-controls li {
+  margin-bottom: 12px;
+}
+
+/* ---------- Security ---------- */
+.c-df {
+  margin: 0;
+}
+.c-df svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.c-df__scroll > svg {
+  min-width: 860px;
+}
+.c-df text {
+  font-family: var(--font);
+  fill: var(--ink);
+}
+.c-df__zone {
+  fill: var(--blue-wash);
+  stroke: var(--blue);
+  stroke-width: 1.25;
+  stroke-dasharray: 6 5;
+}
+.c-df__ext {
+  fill: none;
+  stroke: var(--rule-strong);
+  stroke-width: 1.25;
+  stroke-dasharray: 3 4;
+}
+.c-df__box {
+  fill: var(--sheet);
+  stroke: var(--rule-strong);
+  stroke-width: 1.25;
+}
+.c-df__box--key {
+  stroke: var(--blue);
+  stroke-width: 1.75;
+}
+.c-df__box--chain {
+  fill: var(--highlight);
+  stroke: #b89a1e;
+}
+.c-df__line {
+  fill: none;
+  stroke: var(--ink-2);
+  stroke-width: 1.5;
+}
+.c-df__line--dash {
+  stroke-dasharray: 5 4;
+}
+.c-df__head {
+  fill: var(--ink-2);
+}
+.c-df__t {
+  font-size: 15px;
+  font-weight: 600;
+}
+.c-df__s {
+  font-size: 12.5px;
+  fill: var(--pencil) !important;
+}
+.c-df__zt {
+  font-size: 12.5px;
+  font-weight: 700;
+  fill: var(--blue) !important;
+}
+.c-df__n circle {
+  fill: var(--navy);
+}
+.c-df__n text {
+  fill: var(--white) !important;
+  font-size: 12px;
+  font-weight: 700;
+}
+.c-df__legend {
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 40px;
+  counter-reset: flow;
+}
+.c-df__legend li {
+  counter-increment: flow;
+  position: relative;
+  padding: 12px 0 12px 36px;
+  border-top: 1px solid var(--rule);
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.c-df__legend li::before {
+  content: counter(flow);
+  position: absolute;
+  left: 0;
+  top: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+}
+.c-df__legend b {
+  color: var(--ink);
+}
+.c-handled {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 48px;
+}
+.c-handled .checks {
+  margin-top: 16px;
+}
+.c-layers {
+  margin: 20px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 10px;
+  color: var(--ink-2);
+  font-size: 15.5px;
+}
+.c-layers b {
+  color: var(--ink);
+}
+.c-lockdemo {
+  margin: 18px 0 0;
+  padding: 16px 18px;
+  border: 1px solid var(--rule-strong);
+  border-left: 4px solid var(--amber);
+  border-radius: var(--radius-s);
+  background: var(--sheet);
+  font-size: 14.5px;
+}
+.c-lockdemo code {
+  display: block;
+  margin: 6px 0 10px;
+  padding: 8px 10px;
+  background: var(--highlight);
+  border-radius: 3px;
+  font: 13.5px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+}
+.c-lockdemo b {
+  color: var(--amber);
+}
+
+/* ---------- Integrations ---------- */
+.c-int-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 56px 0 0;
+  padding-bottom: 12px;
+}
+.c-int-head:first-child {
+  margin-top: 0;
+}
+.c-int-head h2 {
+  font-size: clamp(24px, 2.4vw, 30px) !important;
+}
+.c-int-head p {
+  font-size: 14.5px;
+  color: var(--pencil);
+}
+.c-int p code,
+.c-code-cap code {
+  font-size: 0.88em;
+  padding: 1px 5px;
+  background: var(--paper-deep);
+  border-radius: var(--radius-s);
+}
+.c-code-cap {
+  margin: 0 0 10px;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+
+/* Webhook tester */
+.c-wt__formats {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.c-wt__formats legend {
+  margin-bottom: 6px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.c-wt__opts {
+  display: inline-flex;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+.c-wt__opts label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  background: var(--sheet);
+  color: var(--ink-2);
+  font-size: 14.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.c-wt__opts label + label {
+  border-left: 1px solid var(--rule-strong);
+}
+.c-wt__opts input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.c-wt__opts label:has(input:checked) {
+  background: var(--blue);
+  color: var(--white);
+}
+.c-wt__opts label:has(input:focus-visible) {
+  box-shadow: inset var(--focus);
+}
+.c-wt__preview {
+  max-height: 340px;
+  overflow: auto;
+}
+.c-wt__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1080px) {
+  .c-quote-split,
+  .c-not {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .c-shift-meta {
+    grid-template-columns: 1fr 1fr;
+  }
+  .c-shift-meta > div:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .c-shift-meta > div:nth-child(n + 3) {
+    border-top: 1px solid var(--rule);
+  }
+}
+@media (max-width: 720px) {
+  .c-dp__counts,
+  .c-handled,
+  .c-df__legend,
+  .c-thresholds {
+    grid-template-columns: 1fr;
+  }
+  .c-dp__counts > div:nth-child(2n),
+  .c-thresholds > div:not(:nth-child(3n + 1)) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .c-dp__slots {
+    flex-direction: column;
+  }
+  .c-sections {
+    columns: 1;
+  }
+  .c-founder {
+    padding: 22px;
+  }
+  .c-int-head {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .c-bar__seg {
+    font-size: 12px;
+    padding: 0 8px;
+  }
+}

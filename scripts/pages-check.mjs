@@ -7,8 +7,10 @@ const errs = []; p.on("pageerror", (e) => errs.push(String(e))); p.on("console",
 await p.goto(base, { waitUntil: "networkidle" });
 await p.waitForTimeout(3500);
 await p.screenshot({ path: `${out}/pages-home.png` });
-await p.getByRole("link", { name: "Open the demo" }).first().click();
+await p.getByRole("link", { name: /live demo/i }).first().click();
 await p.waitForSelector("a.row-link", { timeout: 30000 });
+await p.waitForTimeout(1200);
+await p.keyboard.press("Escape"); // first visit opens the guided tour
 console.log("demo url", p.url(), "rows", await p.locator("a.row-link").count());
 await p.screenshot({ path: `${out}/pages-queue.png` });
 await p.locator("a.row-link").first().click();

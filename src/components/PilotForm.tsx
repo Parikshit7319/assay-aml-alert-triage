@@ -1,11 +1,20 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { pilotAction, type FormState } from "@/app/(site)/auth-actions";
+import { track } from "@/lib/analytics-client";
 
 export function PilotForm() {
   const [state, action, pending] = useActionState<FormState, FormData>(pilotAction, {});
-  if (state.ok) return <p className="form-ok">{state.ok}</p>;
+  useEffect(() => {
+    if (state.ok) track("pilot_submit");
+  }, [state.ok]);
+  if (state.ok)
+    return (
+      <div role="status" aria-live="polite">
+        <p className="form-ok">{state.ok}</p>
+      </div>
+    );
   return (
     <form action={action} className="lead-form">
       <div className="row">
@@ -60,7 +69,9 @@ export function PilotForm() {
         Website
         <input type="text" name="website" tabIndex={-1} autoComplete="off" />
       </label>
-      {state.error && <p className="form-error">{state.error}</p>}
+      <div role="status" aria-live="polite">
+        {state.error && <p className="form-error">{state.error}</p>}
+      </div>
       <div>
         <button className="btn" type="submit" disabled={pending}>
           {pending ? "Sending" : "Request a pilot"}

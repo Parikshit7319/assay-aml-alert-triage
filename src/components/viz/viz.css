@@ -1,0 +1,312 @@
+/* Shared chart chrome for the viz components. Text wears ink tokens; colour lives on marks. */
+
+.viz {
+  position: relative;
+  font-family: var(--font);
+  color: var(--ink);
+}
+
+.viz-empty {
+  padding: 18px 16px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--radius-m, 6px);
+  background: var(--sheet);
+  color: var(--pencil);
+  font-size: 14px;
+}
+
+/* ---------- legend ---------- */
+.viz-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--ink-2);
+}
+.viz-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.viz-legend__item svg {
+  flex: none;
+  overflow: visible;
+}
+.viz-legend__note {
+  color: var(--pencil);
+}
+
+/* ---------- plot ---------- */
+.viz-plot {
+  position: relative;
+}
+.viz-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  font-family: var(--font);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.viz-grid line {
+  stroke: var(--rule);
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.viz-month-rule {
+  stroke: var(--rule);
+  stroke-opacity: 0.4;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.viz-baseline {
+  stroke: var(--rule-strong);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.viz-tick {
+  fill: var(--pencil);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.viz-axis-cap {
+  fill: var(--ink-2);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Reference threshold: dashed on purpose, it is a rule, not a gridline. */
+.viz-ctr line {
+  stroke: var(--ink-2);
+  stroke-width: 1;
+  stroke-dasharray: 5 4;
+}
+.viz-ctr text {
+  fill: var(--ink-2);
+  font-size: 11px;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--sheet);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.viz-halo line {
+  stroke: var(--highlight-solid);
+  stroke-width: 6.5;
+  stroke-linecap: round;
+}
+.viz-halo circle {
+  fill: var(--highlight-solid);
+}
+
+/* Focus draws the same ring as hover (see the component), so the default outline is not needed. */
+.viz-mark {
+  outline: none;
+}
+.viz-hit {
+  fill: transparent;
+  touch-action: none;
+}
+
+/* ---------- graph ---------- */
+.viz-edge path {
+  stroke-linecap: round;
+}
+.viz-node {
+  outline: none;
+}
+.viz-node:focus-visible circle:nth-last-of-type(2) {
+  stroke: var(--blue);
+  stroke-width: 2.5;
+}
+/* --viz-k grows label text inside a scaled-down graph so it stays legible on phones. */
+.viz-node-label {
+  fill: var(--ink);
+  font-size: calc(12px * var(--viz-k, 1));
+  paint-order: stroke;
+  stroke: var(--sheet);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.viz-node-label--strong {
+  font-weight: 650;
+  font-size: calc(13px * var(--viz-k, 1));
+}
+.viz-node-label--risk {
+  fill: var(--ink-2);
+  font-size: calc(11px * var(--viz-k, 1));
+  font-weight: 600;
+}
+.viz-customer__initials {
+  fill: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+/* ---------- tooltip ---------- */
+.viz-tip {
+  position: absolute;
+  z-index: 5;
+  min-width: 160px;
+  max-width: 260px;
+  padding: 8px 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  background: var(--white);
+  box-shadow: 0 4px 14px rgba(35, 42, 51, 0.12);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.4;
+  pointer-events: none;
+  white-space: normal;
+}
+.viz-tip__head {
+  margin-bottom: 2px;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.viz-tip__value {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+.viz-tip__value span {
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.viz-tip__row + .viz-tip__row,
+.viz-tip__value + .viz-tip__row {
+  margin-top: 1px;
+}
+.viz-tip__muted {
+  color: var(--pencil);
+}
+.viz-tip__flag {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--highlight);
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.viz-tip__flag--ring {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.viz-tip__flag--risk {
+  background: var(--red-wash, #fae8e5);
+  margin-right: 4px;
+}
+
+/* ---------- table twin ---------- */
+.viz-table {
+  margin-top: 10px;
+  font-size: 13px;
+}
+.viz-table summary {
+  display: inline-block;
+  cursor: pointer;
+  color: var(--blue);
+  font-weight: 600;
+  list-style: none;
+}
+.viz-table summary::-webkit-details-marker {
+  display: none;
+}
+.viz-table summary::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 8px 2px 1px;
+  border-right: 1.75px solid currentColor;
+  border-bottom: 1.75px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+.viz-table[open] summary::before {
+  transform: rotate(45deg);
+}
+.viz-table__scroll {
+  max-height: 320px;
+  margin-top: 8px;
+  overflow: auto;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--white);
+}
+.viz-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.viz-table th,
+.viz-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+}
+.viz-table th {
+  position: sticky;
+  top: 0;
+  background: var(--sheet);
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.viz-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.viz-table tr.is-triggered td {
+  background: var(--highlight);
+}
+.viz-table tr.is-risk td:first-child {
+  box-shadow: inset 3px 0 0 var(--red);
+}
+.viz-num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.viz-linkbtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--blue);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.viz-linkbtn:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 560px) {
+  .viz-legend {
+    font-size: 12px;
+    gap: 4px 12px;
+  }
+  .viz-tip {
+    max-width: 200px;
+  }
+}
+
+@media (forced-colors: active) {
+  .viz-halo line,
+  .viz-halo circle {
+    stroke: Highlight;
+    fill: Highlight;
+  }
+}

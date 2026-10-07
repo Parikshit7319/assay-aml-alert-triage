@@ -1,9 +1,10 @@
 import "server-only";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { appendAudit } from "./audit";
 import type { DB } from "./db/client";
 import { alerts, decisions, qaReviews, triageRuns, workspaces, type DecisionAction, type PolicySettings } from "./db/schema";
 import { DAY, newId } from "./util";
+import { queueWebhook } from "./webhooks";
 
 type Workspace = typeof workspaces.$inferSelect;
 
@@ -75,6 +76,13 @@ export async function decideL1(
       payload: { runId: run?.id ?? null, agentRecommendation: finalRec ?? null, reasonCode: input.reasonCode ?? null, note: input.note ?? null, seconds },
     });
   });
+  await queueWebhook(
+    db,
+    ws,
+    input.outcome === "close" ? "alert.closed" : "alert.escalated",
+    alert.id,
+    `${input.outcome === "close" ? "Closed" : "Escalated"} by ${input.actor}${isOverride ? ", overriding the agent" : ""}.`,
+  );
   return { action };
 }
 
@@ -124,6 +132,7 @@ export async function batchClose(db: DB, ws: Workspace, input: { alertIds: strin
       payload: { alertIds: eligible.map((r) => r.alert.id), qaSampled: [...sampled], skipped: rows.length - eligible.length + (input.alertIds.length - rows.length) },
     });
   });
+  await queueWebhook(db, ws, "alert.closed", eligible.map((r) => r.alert.id), `Batch-approved by ${input.actor} (${batchId}).`);
   return { closed: eligible.length, sampled: sampled.size, skipped: input.alertIds.length - eligible.length, batchId };
 }
 
@@ -181,6 +190,7 @@ export async function recordSarDecision(db: DB, ws: Workspace, input: { alertId:
       payload: { note: input.note ?? null, onTime: alert.sarDueAt ? now <= alert.sarDueAt : null },
     });
   });
+  await queueWebhook(db, ws, "sar.decided", alert.id, `${input.file ? "SAR filing recorded" : "Closed with no SAR"} by ${input.actor}.`);
 }
 
 export async function reviewQa(db: DB, ws: Workspace, input: { qaId: string; result: "agree" | "disagree"; actor: string; note?: string }) {
@@ -204,10 +214,20 @@ export async function reviewQa(db: DB, ws: Workspace, input: { qaId: string; res
 
 export async function updatePolicy(db: DB, ws: Workspace, next: Omit<PolicySettings, "version">, actor: string) {
   const prev = ws.settings;
-  const changed = (Object.keys(next) as (keyof typeof next)[]).filter((k) => JSON.stringify(next[k]) !== JSON.stringify(prev[k]));
+  // The webhook lives in the same JSON but is not policy: it never bumps the version and is never overwritten here.
+  const { webhook: _ignored, ...policy } = next;
+  void _ignored;
+  const changed = (Object.keys(policy) as (keyof typeof policy)[]).filter((k) => JSON.stringify(policy[k]) !== JSON.stringify(prev[k]));
   if (!changed.length) return prev;
-  const settings: PolicySettings = { ...next, version: prev.version + 1 };
-  await db.update(workspaces).set({ settings }).where(eq(workspaces.id, ws.id));
+  const settings: PolicySettings = { ...policy, webhook: prev.webhook, version: prev.version + 1 };
+  const stored = { ...policy, version: settings.version };
+  await db
+    .update(workspaces)
+    .set({
+      // Merge in SQL so a webhook saved since this request loaded the workspace survives.
+      settings: sql`${JSON.stringify(stored)}::jsonb || case when ${workspaces.settings}->'webhook' is not null then jsonb_build_object('webhook', ${workspaces.settings}->'webhook') else '{}'::jsonb end`,
+    })
+    .where(eq(workspaces.id, ws.id));
   await appendAudit(db, {
     workspaceId: ws.id,
     actorType: "human",
@@ -215,7 +235,7 @@ export async function updatePolicy(db: DB, ws: Workspace, next: Omit<PolicySetti
     action: "policy.updated",
     entityType: "policy",
     entityId: `v${settings.version}`,
-    payload: { from: prev.version, to: settings.version, changed: Object.fromEntries(changed.map((k) => [k, { from: prev[k], to: next[k] }])) },
+    payload: { from: prev.version, to: settings.version, changed: Object.fromEntries(changed.map((k) => [k, { from: prev[k], to: policy[k] }])) },
   });
   return settings;
 }

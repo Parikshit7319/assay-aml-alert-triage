@@ -1,8 +1,9 @@
+import { Time } from "@/components/workbench/Time";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import Link from "next/link";
 import { QaForm } from "@/components/app/QaForm";
 import { alerts, customers, qaReviews, triageRuns } from "@/lib/db/schema";
-import { fmtDateTime, REC_LABEL, TYPOLOGY_LABEL } from "@/lib/labels";
+import { REC_LABEL, TYPOLOGY_LABEL } from "@/lib/labels";
 import { requireTenant } from "@/lib/tenant";
 
 export default async function QaPage() {
@@ -60,7 +61,7 @@ export default async function QaPage() {
                     </td>
                     <td>{TYPOLOGY_LABEL[alert.typology]}</td>
                     <td>{run ? <span className={`rec rec-${run.recommendation}`}>{REC_LABEL[run.recommendation]} {Math.round(run.confidence * 100)}%</span> : "n/a"}</td>
-                    <td className="num">{fmtDateTime(qa.sampledAt)}</td>
+                    <td className="num"><Time value={qa.sampledAt} /></td>
                     <td style={{ minWidth: 300 }}>
                       <QaForm qaId={qa.id} />
                     </td>

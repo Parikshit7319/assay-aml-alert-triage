@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Wordmark } from "@/components/Wordmark";
 import { AppNav } from "@/components/app/AppNav";
+import { WorkbenchShell } from "@/components/app/WorkbenchShell";
 import { PLANS } from "@/lib/plans";
 import { sidebarCounts } from "@/lib/queries";
 import { requireTenant } from "@/lib/tenant";
@@ -11,10 +12,14 @@ import "./app.css";
 
 export const metadata: Metadata = { title: "Workbench", robots: { index: false } };
 
+function hoursUntil(d: Date): number {
+  return Math.max(0, Math.round((d.getTime() - Date.now()) / 3_600_000));
+}
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const t = await requireTenant();
   const counts = await sidebarCounts(t.db, t.ws.id);
-  const hoursLeft = t.ws.expiresAt ? Math.max(0, Math.round((t.ws.expiresAt.getTime() - Date.now()) / 3_600_000)) : null;
+  const hoursLeft = t.ws.expiresAt ? hoursUntil(t.ws.expiresAt) : null;
 
   return (
     <div className="app">
@@ -60,7 +65,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </form>
           </div>
         )}
-        <div className="app-content">{children}</div>
+        <div className="app-content">
+          <WorkbenchShell>{children}</WorkbenchShell>
+        </div>
       </div>
     </div>
   );

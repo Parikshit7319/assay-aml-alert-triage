@@ -102,3 +102,12 @@ export function nameSimilarity(a: string, b: string): number {
   }
   return jaro + prefix * 0.1 * (1 - jaro);
 }
+
+/** Human duration for a trace step: "<0.01 ms", "0.42 ms", "12 ms", "1.8 s". */
+export function fmtMs(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0.01) return "<0.01 ms";
+  if (ms < 1) return `${ms.toFixed(2)} ms`;
+  if (ms < 10) return `${ms.toFixed(1)} ms`;
+  if (ms < 1000) return `${Math.round(ms)} ms`;
+  return `${(ms / 1000).toFixed(1)} s`;
+}

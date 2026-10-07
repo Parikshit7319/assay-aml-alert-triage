@@ -7,7 +7,10 @@ const MAIN = [
   { href: "/app", label: "Alert queue", count: "open" as const },
   { href: "/app/l2", label: "L2 investigations", count: "l2" as const },
   { href: "/app/qa", label: "QA review", count: "qa" as const },
+  { href: "/app/customers", label: "Customers" },
+  { href: "/app/team", label: "Team" },
   { href: "/app/metrics", label: "Metrics" },
+  { href: "/app/shadow", label: "Shadow mode" },
   { href: "/app/audit", label: "Audit log" },
 ];
 const ADMIN = [

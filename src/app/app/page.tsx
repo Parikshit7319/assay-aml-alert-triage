@@ -5,6 +5,7 @@ import type { AlertStatus, Typology } from "@/lib/db/schema";
 import { TYPOLOGIES, TYPOLOGY_LABEL } from "@/lib/labels";
 import { OPEN, queueRows } from "@/lib/queries";
 import { requireTenant } from "@/lib/tenant";
+import { listMembers } from "@/lib/collab";
 import { batchCloseAction } from "./actions";
 
 const VIEWS: Record<string, { label: string; statuses: AlertStatus[] }> = {
@@ -18,7 +19,7 @@ export default async function QueuePage(props: PageProps<"/app">) {
   const sp = await props.searchParams;
   const view = typeof sp.view === "string" && VIEWS[sp.view] ? sp.view : "open";
   const typ = typeof sp.typ === "string" && (TYPOLOGIES as string[]).includes(sp.typ) ? (sp.typ as Typology) : null;
-  const all = await queueRows(t.db, t.ws.id, VIEWS[view].statuses);
+  const [all, members] = await Promise.all([queueRows(t.db, t.ws.id, VIEWS[view].statuses), listMembers(t.db, t.ws.id)]);
   const rows = typ ? all.filter((r) => r.typology === typ) : all;
   const shadow = Object.fromEntries(TYPOLOGIES.map((ty) => [ty, t.ws.settings.autonomy[ty] === 0])) as Record<Typology, boolean>;
 
@@ -70,15 +71,6 @@ export default async function QueuePage(props: PageProps<"/app">) {
             {v.label}
           </Link>
         ))}
-        <span className="sep" aria-hidden="true" />
-        <Link href={href(view, null)} aria-current={!typ ? "true" : undefined}>
-          All types
-        </Link>
-        {TYPOLOGIES.map((ty) => (
-          <Link key={ty} href={href(view, ty)} aria-current={typ === ty ? "true" : undefined}>
-            {TYPOLOGY_LABEL[ty]}
-          </Link>
-        ))}
       </div>
 
       <QueueTable
@@ -88,6 +80,8 @@ export default async function QueuePage(props: PageProps<"/app">) {
         qaRate={t.ws.settings.qaSampleRate}
         selectable={view === "open"}
         batchAction={batchCloseAction}
+        members={members.map((m) => ({ id: m.id, name: m.name }))}
+        currentUserId={t.user?.id}
       />
     </>
   );

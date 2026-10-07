@@ -2,18 +2,19 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { appBaseUrl, vercelOrigins } from "./app-url";
 import { appendAudit } from "./audit";
 import { getDb } from "./db/client";
 import { schema, workspaceMembers, workspaces } from "./db/schema";
 import { DEFAULT_POLICY } from "./engine/policy";
+import { authSecret } from "./secrets";
 import { newId } from "./util";
 
 async function build() {
   const db = await getDb();
-  const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret && process.env.NODE_ENV === "production" && process.env.NEXT_PHASE !== "phase-production-build") {
-    throw new Error("BETTER_AUTH_SECRET must be set in production.");
-  }
+  // BETTER_AUTH_SECRET, or in production a stable secret derived from DATABASE_URL (with a warning).
+  const secret = authSecret();
+  const baseURL = appBaseUrl();
   const socialProviders: Record<string, unknown> = {};
   if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
     socialProviders.microsoft = {
@@ -28,8 +29,10 @@ async function build() {
 
   return betterAuth({
     appName: "Assay",
-    secret: secret ?? "dev-only-secret-change-me-dev-only-secret",
-    baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+    secret,
+    baseURL,
+    // Preview deployments and the production alias share one database, so trust all of this project's Vercel hosts.
+    trustedOrigins: [...new Set([baseURL, ...vercelOrigins()])],
     database: drizzleAdapter(db, { provider: "pg", schema }),
     emailAndPassword: { enabled: true, minPasswordLength: 10, autoSignIn: true },
     socialProviders,

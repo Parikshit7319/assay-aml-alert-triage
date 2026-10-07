@@ -1,14 +1,24 @@
 import { brand } from "@/lib/brand";
 
-/** Wordmark: the name beside a small hallmark, the stamp an assay office strikes on tested metal. */
-export function Wordmark({ size = 22 }: { size?: number }) {
+/**
+ * The mark: an "A" whose crossbar is a highlighter stroke, on a security-blue
+ * seal. It reads at favicon size and carries the product idea: evidence, marked.
+ */
+export function LogoMark({ size = 28, inverse = false }: { size?: number; inverse?: boolean }) {
   return (
-    <span className="wordmark" style={{ fontSize: size }}>
-      <svg width={size * 0.95} height={size * 0.95} viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M6 1h12l5 5v12l-5 5H6l-5-5V6z" fill="none" stroke="currentColor" strokeWidth="2" />
-        <path d="M7.5 16.5 12 6.5l4.5 10M9.2 12.8h5.6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      </svg>
-      <span>{brand.name}</span>
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" className="logo-mark">
+      <rect x="1" y="1" width="30" height="30" rx="8" fill={inverse ? "#ffffff" : "#1d3c8c"} />
+      <path d="M9.2 24.5 16 7.5l6.8 17" fill="none" stroke={inverse ? "#1d3c8c" : "#ffffff"} strokeWidth="3.1" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="10.4" y="16.6" width="11.2" height="3.6" rx="1.2" fill="#f5dc6b" />
+    </svg>
+  );
+}
+
+export function Wordmark({ size = 22, inverse = false }: { size?: number; inverse?: boolean }) {
+  return (
+    <span className={`wordmark${inverse ? " wordmark--inverse" : ""}`} style={{ fontSize: size }}>
+      <LogoMark size={Math.round(size * 1.18)} inverse={inverse} />
+      <span className="wordmark__text">{brand.name}</span>
     </span>
   );
 }

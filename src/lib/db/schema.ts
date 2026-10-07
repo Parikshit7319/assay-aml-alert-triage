@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   bigserial,
   boolean,
@@ -92,6 +93,19 @@ export interface PolicySettings {
   rationaleDepth: "standard" | "full"; // how much no-SAR rationale to keep
   internalSlaDays: number; // bank policy for alert age, not the SAR clock
   provider: "simulated" | "anthropic" | "openai" | "azure-openai";
+  /** Outbound webhook. Not policy: changing it does not bump the policy version. Optional, so older settings stay valid. */
+  webhook?: WebhookSettings;
+}
+
+export type WebhookFormat = "json" | "slack" | "teams";
+
+export interface WebhookSettings {
+  url: string;
+  format: WebhookFormat;
+  /** HMAC-SHA256 signing secret. Never sent to the browser after it is first shown. */
+  secret: string;
+  /** Subscribed event names, e.g. "alert.escalated". */
+  events: string[];
 }
 
 export const workspaces = pgTable("workspaces", {
@@ -149,7 +163,9 @@ export const customers = pgTable(
 export const transactions = pgTable(
   "transactions",
   {
-    id: text("id").primaryKey(), // citation id, e.g. TXN-90AB12
+    // Citation id, e.g. TXN-90AB12KQ. Unique within a workspace: demo workspaces seed thousands
+    // of transactions each, so a global key on a short id would eventually collide.
+    id: text("id").notNull(),
     workspaceId: text("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
@@ -167,7 +183,7 @@ export const transactions = pgTable(
     branch: text("branch"),
     memo: text("memo"), // customer-supplied, always untrusted
   },
-  (t) => [index("txn_ws_customer_idx").on(t.workspaceId, t.customerId, t.ts)],
+  (t) => [primaryKey({ columns: [t.workspaceId, t.id] }), index("txn_ws_customer_idx").on(t.workspaceId, t.customerId, t.ts)],
 );
 
 export const watchlistEntries = pgTable(
@@ -243,11 +259,34 @@ export const alerts = pgTable(
     decidedAt: timestamp("decided_at", { withTimezone: true }),
     historical: boolean("historical").notNull().default(false), // seeded history for metrics
     agentAssisted: boolean("agent_assisted").notNull().default(true),
+    assigneeId: text("assignee_id").references(() => user.id, { onDelete: "set null" }),
   },
   (t) => [
     index("alerts_ws_status_idx").on(t.workspaceId, t.status),
     index("alerts_ws_created_idx").on(t.workspaceId, t.createdAt),
+    index("alerts_ws_assignee_idx").on(t.workspaceId, t.assigneeId),
   ],
+);
+
+/** Analyst notes and L1-to-L2 handoffs on an alert. Mentions hold user ids. */
+export const alertNotes = pgTable(
+  "alert_notes",
+  {
+    id: text("id").primaryKey(), // NOTE-xxxx
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    alertId: text("alert_id")
+      .notNull()
+      .references(() => alerts.id, { onDelete: "cascade" }),
+    authorId: text("author_id").references(() => user.id, { onDelete: "set null" }),
+    authorName: text("author_name").notNull(),
+    body: text("body").notNull(), // max 4,000 characters, enforced in code
+    mentions: text("mentions").array().notNull().default(sql`'{}'::text[]`),
+    kind: text("kind").$type<"note" | "handoff">().notNull().default("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("notes_ws_alert_idx").on(t.workspaceId, t.alertId, t.createdAt)],
 );
 
 export interface RationaleItem {
@@ -306,6 +345,7 @@ export const triageRuns = pgTable(
     policyHits: jsonb("policy_hits").$type<PolicyHit[]>().notNull(),
     validation: jsonb("validation").$type<ValidationResult>().notNull(),
     narrative: text("narrative"),
+    promptVersion: text("prompt_version"), // hash of the system prompt template, null for runs before it was recorded
     autoCloseEligible: boolean("auto_close_eligible").notNull().default(false),
     batchEligible: boolean("batch_eligible").notNull().default(false),
     inputTokens: integer("input_tokens").notNull().default(0),
@@ -472,6 +512,26 @@ export const leads = pgTable("leads", {
   message: text("message"),
 });
 
+/*
+ * First-party analytics. No IP address or user agent is stored: `visitor` is a
+ * 16-hex-character hash of a daily salt, the IP and the user agent, so it
+ * cannot be reversed and does not link one day to the next.
+ */
+export const analyticsEvents = pgTable(
+  "analytics_events",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    ts: timestamp("ts", { withTimezone: true }).notNull().defaultNow(),
+    event: text("event").notNull(),
+    path: text("path").notNull(),
+    label: text("label"),
+    referrerHost: text("referrer_host"),
+    device: text("device").$type<"mobile" | "tablet" | "desktop">(),
+    visitor: text("visitor").notNull(),
+  },
+  (t) => [index("analytics_ts_idx").on(t.ts), index("analytics_event_ts_idx").on(t.event, t.ts)],
+);
+
 export const schema = {
   user,
   session,
@@ -492,4 +552,6 @@ export const schema = {
   usageEvents,
   apiKeys,
   leads,
+  alertNotes,
+  analyticsEvents,
 };

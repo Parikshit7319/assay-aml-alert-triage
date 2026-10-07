@@ -65,6 +65,8 @@ export interface EvidenceBundle {
   priorCases: CaseRecord[];
   watchlist: WatchlistRecord[];
   highRiskCountries: string[];
+  /** Measured wall-clock time, in milliseconds, spent loading each part of the evidence. */
+  loadTimings?: Partial<Record<"alert" | "customer" | "transactions" | "priorCases" | "watchlist", number>>;
 }
 
 export interface WatchlistHit {

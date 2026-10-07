@@ -1,0 +1,122 @@
+/* Operator pages (/admin). Prefixed to stay out of the way of site and app styles. */
+.adm {
+  padding: 32px 24px 64px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-size: 14.5px;
+}
+.adm h1 {
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+.adm-lede {
+  color: var(--ink-2);
+  margin: 0 0 24px;
+  max-width: 72ch;
+}
+.adm-nav {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 18px;
+  font-size: 13.5px;
+}
+.adm-figs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0;
+  margin: 0 0 28px;
+  border-top: 1px solid var(--rule-strong);
+  border-bottom: 1px solid var(--rule-strong);
+}
+.adm-figs > div {
+  padding: 14px 16px 14px 0;
+}
+.adm-figs dt {
+  font-size: 12.5px;
+  color: var(--pencil);
+}
+.adm-figs dd {
+  margin: 2px 0 0;
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.adm-figs dd small {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.adm-sec {
+  margin: 0 0 32px;
+}
+.adm-sec h2 {
+  font-size: 17px;
+  margin: 0 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule-strong);
+}
+.adm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0 32px;
+}
+.adm-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.adm-chart text {
+  font-family: var(--font);
+  font-size: 11px;
+  fill: var(--pencil);
+}
+.adm-legend {
+  display: flex;
+  gap: 18px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  margin: 6px 0 0;
+}
+.adm-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  vertical-align: -1px;
+  border-radius: 2px;
+}
+.adm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.adm-table th {
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--pencil);
+  border-bottom: 1px solid var(--rule-strong);
+  padding: 6px 10px 6px 0;
+}
+.adm-table td {
+  border-bottom: 1px solid var(--rule);
+  padding: 6px 10px 6px 0;
+  vertical-align: top;
+}
+.adm-table .r {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.adm-bar {
+  display: inline-block;
+  height: 6px;
+  background: var(--blue);
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+.adm-fine {
+  font-size: 12.5px;
+  color: var(--pencil);
+}

@@ -30,6 +30,11 @@ jobs:
         env:
           PAGES_BASE_PATH: /${{ github.event.repository.name }}
           PAGES_SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+          # Optional repository variables (Settings > Secrets and variables > Actions > Variables):
+          # PAGES_CNAME for a custom domain, APP_ORIGIN / API_BASE once the server edition is deployed.
+          PAGES_CNAME: ${{ vars.PAGES_CNAME }}
+          NEXT_PUBLIC_APP_ORIGIN: ${{ vars.APP_ORIGIN }}
+          NEXT_PUBLIC_API_BASE: ${{ vars.API_BASE }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out

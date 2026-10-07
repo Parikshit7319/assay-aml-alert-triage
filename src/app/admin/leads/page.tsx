@@ -1,8 +1,7 @@
 import { desc } from "drizzle-orm";
 import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
-import { getAuth } from "@/lib/auth";
+import Link from "next/link";
+import { requireOperator } from "@/lib/admin";
 import { getDb } from "@/lib/db/client";
 import { leads } from "@/lib/db/schema";
 
@@ -12,15 +11,15 @@ export const metadata: Metadata = { title: "Pilot requests", robots: { index: fa
 
 /** Operator-only view of pilot requests. Access: signed-in users whose email is in ADMIN_EMAILS. */
 export default async function LeadsPage() {
-  const admins = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-  const h = await headers();
-  const auth = await getAuth();
-  const s = await auth.api.getSession({ headers: h });
-  if (!s || !admins.includes(s.user.email.toLowerCase())) notFound();
+  await requireOperator();
   const db = await getDb();
   const rows = await db.select().from(leads).orderBy(desc(leads.createdAt)).limit(500);
   return (
     <main style={{ padding: 32, maxWidth: 1200, margin: "0 auto" }}>
+      <nav aria-label="Operator pages" style={{ display: "flex", gap: 16, marginBottom: 18, fontSize: 13.5 }}>
+        <span aria-current="page">Pilot requests</span>
+        <Link href="/admin/analytics">Site analytics</Link>
+      </nav>
       <h1 style={{ fontSize: 24, marginBottom: 16 }}>Pilot requests ({rows.length})</h1>
       <div className="prose" style={{ maxWidth: "none" }}>
         <table>
